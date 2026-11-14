@@ -1,0 +1,50 @@
+{
+  "loja": "KabumSim",
+  "produtos": [
+    {
+      "chave": "rtx 4060",
+      "produto": "GPU ASUS Dual RTX 4060 OC 8GB",
+      "specs": "8GB GDDR6, DLSS3, 2535MHz",
+      "preco": 1899.9,
+      "frete": 0.0,
+      "avaliacao": 4.9,
+      "garantia_meses": 36
+    },
+    {
+      "chave": "notebook",
+      "produto": "Notebook Gamer Acer Nitro V15",
+      "specs": "i5-13420H, RTX 3050, 16GB, SSD 512GB",
+      "preco": 4299.9,
+      "frete": 0.0,
+      "avaliacao": 4.8,
+      "garantia_meses": 12
+    },
+    {
+      "chave": "monitor",
+      "produto": "Monitor Gamer LG UltraGear 24 Pol",
+      "specs": "24 Pol, IPS, 180Hz, 1ms, FHD",
+      "preco": 799.9,
+      "frete": 29.9,
+      "avaliacao": 4.9,
+      "garantia_meses": 12
+    },
+    {
+      "chave": "ssd",
+      "produto": "SSD Kingston NV2 1TB NVMe M.2",
+      "specs": "Leitura 3500MB/s, Gravação 2100MB/s",
+      "preco": 379.9,
+      "frete": 15.0,
+      "avaliacao": 4.8,
+      "garantia_meses": 36
+    },
+    {
+      "chave": "iphone",
+      "produto": "Apple iPhone 15 128GB Preto",
+      "specs": "Tela 6.1 OLED, Chip A16 Bionic, 5G",
+      "preco": 4699.0,
+      "frete": 0.0,
+      "avaliacao": 4.9,
+      "garantia_meses": 12
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+cenario,modo,tempo_total_ms,lojas_ok,status_loja_afetada,detalhe,menor_preco
+0) todas as lojas ativas,sequencial,618.95,4/4,sucesso,-,PichauSim
+0) todas as lojas ativas,concorrente,156.23,4/4,sucesso,-,PichauSim
+a) loja desligada antes,sequencial,465.06,3/4,erro_comunicacao,ConnectionRefusedError,PichauSim
+a) loja desligada antes,concorrente,156.59,3/4,erro_comunicacao,ConnectionRefusedError,PichauSim
+b) loja derrubada durante,concorrente,307.69,3/4,erro_comunicacao,ConexaoEncerrada,PichauSim
+b) loja derrubada durante,sequencial,757.82,3/4,erro_comunicacao,ConexaoEncerrada,PichauSim
+c) loja lenta (timeout),sequencial,2964.3,3/4,timeout,TimeoutError,PichauSim
+c) loja lenta (timeout),concorrente,2502.33,3/4,timeout,TimeoutError,PichauSim
+d) loja recuperada,sequencial,623.37,4/4,sucesso,-,PichauSim
+d) loja recuperada,concorrente,156.74,4/4,sucesso,-,PichauSim

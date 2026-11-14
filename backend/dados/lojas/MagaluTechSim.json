@@ -1,0 +1,50 @@
+{
+  "loja": "MagaluTechSim",
+  "produtos": [
+    {
+      "chave": "rtx 4060",
+      "produto": "GPU Gigabyte Windforce OC RTX 4060",
+      "specs": "8GB GDDR6, Dual Fan",
+      "preco": 1989.0,
+      "frete": 0.0,
+      "avaliacao": 4.7,
+      "garantia_meses": 12
+    },
+    {
+      "chave": "notebook",
+      "produto": "Notebook Dell G15 5530 Gamer",
+      "specs": "i5-13450HX, RTX 3050 6GB, 16GB, 512GB",
+      "preco": 4499.0,
+      "frete": 0.0,
+      "avaliacao": 4.9,
+      "garantia_meses": 12
+    },
+    {
+      "chave": "monitor",
+      "produto": "Monitor Gamer LG UltraGear 24 Pol FHD",
+      "specs": "24 Pol, IPS, 180Hz, 1ms",
+      "preco": 789.0,
+      "frete": 0.0,
+      "avaliacao": 4.9,
+      "garantia_meses": 12
+    },
+    {
+      "chave": "ssd",
+      "produto": "SSD SanDisk Plus 1TB NVMe M.2",
+      "specs": "Leitura 3200MB/s, PCIe Gen3",
+      "preco": 369.9,
+      "frete": 0.0,
+      "avaliacao": 4.7,
+      "garantia_meses": 36
+    },
+    {
+      "chave": "iphone",
+      "produto": "Apple iPhone 15 128GB Preto Vitrine",
+      "specs": "Tela 6.1 OLED, Chip A16 Bionic, 5G",
+      "preco": 4499.0,
+      "frete": 0.0,
+      "avaliacao": 4.9,
+      "garantia_meses": 12
+    }
+  ]
+}

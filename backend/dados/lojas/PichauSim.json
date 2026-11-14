@@ -1,0 +1,50 @@
+{
+  "loja": "PichauSim",
+  "produtos": [
+    {
+      "chave": "rtx 4060",
+      "produto": "GPU Galax GeForce RTX 4060 1-Click OC",
+      "specs": "8GB GDDR6, DLSS3, Dual Fan",
+      "preco": 1829.0,
+      "frete": 35.0,
+      "avaliacao": 4.7,
+      "garantia_meses": 24
+    },
+    {
+      "chave": "notebook",
+      "produto": "Notebook Gamer Lenovo LOQ",
+      "specs": "i5-12450H, RTX 3050, 16GB, SSD 512GB",
+      "preco": 4189.0,
+      "frete": 45.0,
+      "avaliacao": 4.7,
+      "garantia_meses": 12
+    },
+    {
+      "chave": "monitor",
+      "produto": "Monitor AOC Hero 24 Pol Gamer",
+      "specs": "24 Pol, IPS, 165Hz, 1ms, FreeSync",
+      "preco": 749.0,
+      "frete": 35.0,
+      "avaliacao": 4.6,
+      "garantia_meses": 12
+    },
+    {
+      "chave": "ssd",
+      "produto": "SSD WD Green SN350 1TB NVMe",
+      "specs": "Leitura 3200MB/s, PCIe Gen3",
+      "preco": 359.0,
+      "frete": 22.0,
+      "avaliacao": 4.6,
+      "garantia_meses": 24
+    },
+    {
+      "chave": "iphone",
+      "produto": "Apple iPhone 15 128GB Azul",
+      "specs": "Tela 6.1 OLED, Chip A16 Bionic, 5G",
+      "preco": 4749.0,
+      "frete": 25.0,
+      "avaliacao": 4.8,
+      "garantia_meses": 12
+    }
+  ]
+}

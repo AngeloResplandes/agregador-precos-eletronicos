@@ -1,0 +1,12 @@
+# Ambiente virtual e caches do Python
+.venv/
+__pycache__/
+*.pyc
+
+# Sistema e editores
+.DS_Store
+
+# Instruções e configuração locais de agentes de IA (não versionadas)
+.claude/
+AGENTS.md
+CLAUDE.md

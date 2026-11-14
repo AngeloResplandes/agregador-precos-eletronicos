@@ -1,0 +1,32 @@
+sequenceDiagram
+    autonumber
+    actor U as Usuário
+    participant C as cliente.py
+    participant A as Agregador (:8000)
+    participant K as KabumSim (:9001)
+    participant P as PichauSim (:9002)
+    participant T as TerabyteSim (:9003)
+    participant M as MagaluTechSim (:9004)
+
+    U->>C: produto="rtx 4060", modo=concorrente, critério=preço
+    C->>+A: connect() + {"operacao":"consultar","produto":"rtx 4060","modo":"concorrente"}\n
+    Note over A: thread do cliente valida a requisição<br/>e inicia o cronômetro (perf_counter)
+
+    par Thread 1
+        A->>+K: connect() + {"operacao":"consultar","produto":"rtx 4060"}\n
+        K-->>-A: {"fonte":"KabumSim","preco_total":1899.9,"status":"sucesso"}\n + close()
+    and Thread 2
+        A->>+P: consultar
+        P-->>-A: {"fonte":"PichauSim","preco_total":1864.0,"status":"sucesso"}
+    and Thread 3
+        A->>+T: consultar
+        T-->>-A: {"fonte":"TerabyteSim","preco_total":1887.9,"status":"sucesso"}
+    and Thread 4
+        A-xM: connect()
+        Note right of M: loja fora do ar →<br/>ConnectionRefusedError<br/>(ou timeout de 2,5 s)
+        Note over A: registra status "erro_comunicacao"
+    end
+
+    Note over A: join() das 4 threads · tempo_total_ms<br/>ordena por preço total · menor preço = PichauSim<br/>grava linha em log_pesquisas.csv
+    A-->>-C: {"status":"sucesso","tempo_total_ms":156,"ofertas_ordenadas":[...],"ocorrencias_ou_falhas":[...]}\n + close()
+    C-->>U: tabela de ofertas, menor preço, melhor custo-benefício e alertas

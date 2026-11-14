@@ -1,0 +1,50 @@
+{
+  "loja": "TerabyteSim",
+  "produtos": [
+    {
+      "chave": "rtx 4060",
+      "produto": "GPU MSI Ventus 2X Black RTX 4060",
+      "specs": "8GB GDDR6, DLSS3, Torx Fan 4.0",
+      "preco": 1859.9,
+      "frete": 28.0,
+      "avaliacao": 4.8,
+      "garantia_meses": 36
+    },
+    {
+      "chave": "notebook",
+      "produto": "Notebook Gamer ASUS TUF Gaming F15",
+      "specs": "i5-12500H, RTX 3050, 16GB, 512GB",
+      "preco": 4399.0,
+      "frete": 0.0,
+      "avaliacao": 4.9,
+      "garantia_meses": 24
+    },
+    {
+      "chave": "monitor",
+      "produto": "Monitor Gamer Samsung Odyssey G30 24 Pol",
+      "specs": "24 Pol, VA, 144Hz, 1ms",
+      "preco": 729.9,
+      "frete": 29.0,
+      "avaliacao": 4.5,
+      "garantia_meses": 12
+    },
+    {
+      "chave": "ssd",
+      "produto": "SSD XPG Gammix S70 Blade 1TB",
+      "specs": "Leitura 7400MB/s, PCIe Gen4 + Dissipador",
+      "preco": 449.9,
+      "frete": 18.0,
+      "avaliacao": 4.9,
+      "garantia_meses": 60
+    },
+    {
+      "chave": "iphone",
+      "produto": "Apple iPhone 15 128GB Verde",
+      "specs": "Tela 6.1 OLED, Chip A16 Bionic, 5G",
+      "preco": 4650.0,
+      "frete": 30.0,
+      "avaliacao": 4.8,
+      "garantia_meses": 12
+    }
+  ]
+}

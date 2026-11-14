@@ -1,0 +1,3 @@
+modo,n,media_ms,desvio_ms,min_ms,max_ms,previsto_ms,regra
+sequencial,10,1020.55,3.77,1011.83,1024.04,1000,soma das latências
+concorrente,10,405.93,1.36,402.14,406.77,400,maior latência

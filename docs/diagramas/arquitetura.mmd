@@ -1,0 +1,48 @@
+flowchart LR
+    subgraph clientes["Clientes (processos independentes)"]
+        direction TB
+        c1["cliente.py<br/>CLI interativa"]
+        c2["cliente.py"]
+        c3["experimentos.py<br/>N clientes em threads"]
+        gw["gateway_http.py · HTTP :8080<br/>cliente TCP do agregador"]
+    end
+
+    web["Navegador<br/>interface web (Vite + React)"]
+
+    subgraph agg["Agregador · agregador.py · TCP 127.0.0.1:8000"]
+        direction TB
+        accept["Thread de aceite<br/>accept()"]
+        tc["Thread por cliente<br/>valida · consolida · ordena"]
+        subgraph estrategia["Estratégia de consulta"]
+            direction LR
+            seq["Sequencial<br/>laço for"]
+            conc["Concorrente<br/>1 thread por loja + join()"]
+        end
+        logcsv[("backend/resultados/<br/>log_pesquisas.csv")]
+        accept --> tc --> estrategia
+        tc -- "Lock" --> logcsv
+    end
+
+    subgraph lojas["Serviços independentes (1 processo cada)"]
+        direction TB
+        l1["KabumSim<br/>:9001"]
+        l2["PichauSim<br/>:9002"]
+        l3["TerabyteSim<br/>:9003"]
+        l4["MagaluTechSim<br/>:9004"]
+    end
+
+    subgraph dados["backend/dados/lojas/*.json"]
+        d["Catálogos simulados"]
+    end
+
+    web -- "HTTP · JSON<br/>/api/..." --> gw
+    c1 & c2 & c3 & gw -- "TCP · JSON + LF<br/>consultar / listar_produtos / ping" --> accept
+    estrategia -- "TCP · JSON + LF<br/>timeout 2,5 s" --> l1 & l2 & l3 & l4
+    l1 & l2 & l3 & l4 -.-> d
+
+    classDef proc fill:#ffffff,stroke:#52514e,color:#0b0b0b
+    classDef destaque fill:#fdf0ea,stroke:#eb6834,color:#0b0b0b
+    classDef loja fill:#eef4fc,stroke:#2a78d6,color:#0b0b0b
+    class c1,c2,c3,gw,web,accept,tc,seq proc
+    class conc destaque
+    class l1,l2,l3,l4 loja

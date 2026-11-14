@@ -1,0 +1,11 @@
+clientes,modo,latencia_media_ms,latencia_p95_ms,latencia_max_ms,tempo_lote_ms,vazao_req_s,falhas
+1,sequencial,423.07,424.33,424.44,423.27,2.36,0
+1,concorrente,107.39,107.59,107.61,107.55,9.3,0
+5,sequencial,424.31,425.8,425.89,426.07,11.74,0
+5,concorrente,110.23,111.25,111.58,111.11,45.0,0
+10,sequencial,425.69,428.36,428.5,427.7,23.38,0
+10,concorrente,111.7,112.63,112.69,113.28,88.28,0
+20,sequencial,426.08,428.8,429.4,429.27,46.59,0
+20,concorrente,114.59,117.77,118.35,118.39,168.93,0
+50,sequencial,431.34,435.76,437.14,438.25,114.09,0
+50,concorrente,122.57,132.09,133.73,134.57,371.56,0
