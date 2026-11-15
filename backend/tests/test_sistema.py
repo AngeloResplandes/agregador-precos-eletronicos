@@ -66,6 +66,8 @@ class TestDemonstracao(unittest.TestCase):
     def test_2_comparar_sequencial_e_concorrente(self):
         codigo, saida = rodar("cliente.py", "rtx", "4060")
         self.assertEqual(codigo, 0)
+        self.assertIn("MODO: SEQUENCIAL", saida)
+        self.assertIn("MODO: CONCORRENTE", saida)
         self.assertIn("Lojas que responderam: 4/4", saida)
         self.assertIn("[MENOR PREÇO]            PichauSim", saida)
         self.assertIn("[MELHOR CUSTO-BENEFÍCIO]", saida)

@@ -155,6 +155,7 @@ cd backend && python3 -m unittest discover -s tests -v
 | CT56 | `cliente.disparar_clientes_simultaneos` com 10 clientes (usado pelo gateway e pelo Exp. 4) | 10 tempos e nenhuma falha | `test_disparar_clientes_simultaneos` | RNF03 |
 | CT57 | O mesmo com o agregador fora do ar | todos os clientes com o motivo da falha, sem exceção | `test_clientes_simultaneos_com_agregador_fora` | RNF04 |
 | CT58 | `iniciar_servicos.ler_latencias` (opção `--latencias` do gateway e do `iniciar_servicos.py`) | `"100,200,300,400"` vira lista; quantidade errada ou texto → erro do argparse | `test_ler_latencias` | RT2 |
+| CT67 | `cliente.executar` no modo comparar | imprime o relatório completo do sequencial, depois o do concorrente e por fim o comparativo com o speedup | `test_comparar_imprime_relatorio_dos_dois_modos` | RF11 |
 
 Também ficam neste nível: `test_produto_inexistente`, `test_listar_produtos`, `test_ping`, `test_pesquisa_via_cliente`, `test_atraso_informado_pelo_cliente`, `test_listar`, `test_json_malformado_recebe_erro`, `test_agregador_fora_do_ar` (CA12) e os testes de `TestLoja` (busca por chave e por nome, item mais barato, listar, ping, validação).
 
@@ -166,7 +167,7 @@ Também ficam neste nível: `test_produto_inexistente`, `test_listar_produtos`, 
 | CT28 | Subir loja em porta já ocupada | `RuntimeError` "em uso" | `test_porta_ocupada_e_detectada` | CA14 |
 | CT29 | Falha no meio da subida | o que já subiu é encerrado | `test_falha_ao_subir_encerra_o_que_ja_tinha_subido` | CA14 |
 | CT30 | `cliente.py --listar` | as 5 chaves do catálogo | `test_1_listar_catalogo` | RF10 / CA15 |
-| CT31 | `cliente.py rtx 4060` (modo comparar) | 4/4 lojas, menor preço PichauSim, melhor custo-benefício, speedup | `test_2_comparar_sequencial_e_concorrente` | RF05–RF07, RF11 |
+| CT31 | `cliente.py rtx 4060` (modo comparar) | relatórios dos dois modos (sequencial e concorrente), 4/4 lojas, menor preço PichauSim, melhor custo-benefício, speedup | `test_2_comparar_sequencial_e_concorrente` | RF05–RF07, RF11 |
 | CT32 | `--criterio custo_beneficio` | ordenação por custo-benefício | `test_3_custo_beneficio` | RF06 |
 | CT33 | `--atraso -5` | `erro_requisicao`, sem traceback | `test_4_parametro_invalido_nao_gera_traceback` | RNF04 |
 | CT34 | Loja desligada e religada | 3/4 com `[ALERTA]`; depois 4/4 | `test_5_loja_desligada_e_recuperada` | RF09 / CA07 |
@@ -180,7 +181,7 @@ Também ficam neste nível: `test_produto_inexistente`, `test_listar_produtos`, 
 | 0 | `cd backend` | todos os comandos abaixo rodam dentro de `backend/` |
 | 1 | `python3 iniciar_servicos.py --latencias 100,200,300,400` | 4 lojas e o agregador como processos separados |
 | 2 | `python3 cliente.py --listar` | catálogo unido das lojas |
-| 3 | `python3 cliente.py rtx 4060` | tabela, menor preço, melhor custo-benefício e speedup (soma × máximo) |
+| 3 | `python3 cliente.py rtx 4060` | relatório do sequencial e do concorrente, menor preço, melhor custo-benefício e speedup (soma × máximo) |
 | 4 | `python3 cliente.py notebook --modo concorrente --criterio custo_beneficio` | ordenação alternativa |
 | 5 | Em outro terminal, subir as lojas uma a uma (`loja_server.py`) e dar Ctrl+C na MagaluTechSim; repetir o passo 3 | 3/4 lojas e `[ALERTA]` com o motivo |
 | 6 | Subir a MagaluTechSim de novo e repetir | volta a 4/4 sem reiniciar o agregador |
@@ -287,6 +288,7 @@ arquivamento do log antigo foram removidos.
 | NC03 | Com as portas já ocupadas (por exemplo, um `iniciar_servicos.py` esquecido aberto), um novo `iniciar_servicos.py` ou `experimentos.py` anunciava "Ambiente pronto": o `ping` era respondido pelos processos antigos | Demonstração e experimentos rodando sobre processos errados; no Exp. 5, derrubar a loja não teria efeito | `Ambiente` verifica se a porta está livre e se o próprio processo continua vivo; se a subida falha, encerra o que já tinha subido | CT28, CT29, CT35 |
 | NC04 | SIGTERM (`kill`) ou SIGHUP (fechar o terminal) no `iniciar_servicos.py` deixava as 4 lojas e o agregador órfãos, ocupando as portas; Ctrl+C no `experimentos.py` mostrava traceback | Próxima execução falhava (ver NC03) | `tratar_sinais_de_encerramento()` converte SIGTERM/SIGHUP em Ctrl+C nos dois scripts; `experimentos.py` trata a interrupção. Na verificação final, o CT36 revelou uma condição de corrida: um sinal recebido enquanto um serviço ainda subia deixava esse processo órfão (o agregador, em 5 de 6 tentativas). O `Ambiente` passou a registrar cada processo no instante em que o cria (0 de 6 depois da correção) | CT36 |
 | NC05 | RF08 diz que o tempo total **e o tempo por loja** são gravados em `log_pesquisas.csv`, mas o CSV só tinha o tempo total | Divergência entre requisito e implementação | Nova coluna `tempos_lojas_ms` no CSV e campo `tempos_lojas_ms` na resposta. (Na versão 1.1, um log com colunas antigas era renomeado; com o formato estável, isso saiu na 1.2.) | CT22 |
+| NC06 | Em 15/11/2026: no modo comparar (padrão da CLI), `cliente.py` fazia as duas pesquisas mas só imprimia o relatório do concorrente; o sequencial aparecia apenas como um tempo no comparativo | Na demonstração não dava para ver a tabela do modo sequencial | `cliente.executar` imprime o relatório de cada modo (sequencial e depois concorrente) antes do comparativo. O teste novo falhou antes da correção (`'MODO: SEQUENCIAL' not found`) | CT31, CT67 |
 
 ### Pendências do grupo
 

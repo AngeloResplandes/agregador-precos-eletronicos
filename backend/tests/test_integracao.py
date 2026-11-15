@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 """Testes ponta a ponta via sockets TCP: cliente -> agregador -> lojas."""
+import contextlib
+import io
 import socket
 import threading
 import unittest
 
 import apoio
 import protocolo
-from cliente import ErroCliente, comparar, disparar_clientes_simultaneos, listar_produtos, requisitar_agregador
+from cliente import (ErroCliente, comparar, disparar_clientes_simultaneos, executar, listar_produtos,
+                     requisitar_agregador)
 from servidor_base import ServidorTCPMultithread
 
 
@@ -54,6 +57,16 @@ class TestPontaAPonta(unittest.TestCase):
         self.assertEqual(r["sequencial"]["modo_execucao"], "sequencial")
         self.assertEqual(r["concorrente"]["modo_execucao"], "concorrente")
         self.assertGreater(r["speedup"], 1.5)
+
+    def test_comparar_imprime_relatorio_dos_dois_modos(self):
+        saida = io.StringIO()
+        with contextlib.redirect_stdout(saida):
+            executar("rtx 4060", protocolo.MODO_COMPARAR, protocolo.CRITERIO_PRECO, **self.conexao)
+        texto = saida.getvalue()
+        self.assertIn("MODO: SEQUENCIAL", texto)
+        self.assertIn("MODO: CONCORRENTE", texto)
+        self.assertLess(texto.index("MODO: SEQUENCIAL"), texto.index("MODO: CONCORRENTE"))
+        self.assertLess(texto.index("MODO: CONCORRENTE"), texto.index("Speedup"))
 
     def test_disparar_clientes_simultaneos(self):
         r = disparar_clientes_simultaneos(10, "ssd", "concorrente", atraso_ms=10, **self.conexao)

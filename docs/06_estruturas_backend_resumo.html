@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Backend em Resumo</title>
+<style>
+  @page { size: A4; margin: 16mm 16mm 16mm 16mm;
+    @bottom-right { content: counter(page); font: 9pt "Helvetica Neue", Helvetica, Arial, sans-serif; color: #6b6a66; }
+    @bottom-left { content: "Agregador de Preços de Eletrônicos — backend em resumo"; font: 8.5pt "Helvetica Neue", Helvetica, Arial, sans-serif; color: #8a8984; }
+  }
+  :root { --tinta:#151515; --tinta2:#4a4945; --linha:#dcdad4; --fundo-cod:#f1f0ec; --ciano:#0e7490; --laranja:#c2410c; --destaque:#eef6f8; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 10.4pt; line-height: 1.45; color: var(--tinta); background:#fff; margin:0; }
+  h1 { font-size: 21pt; margin: 0 0 1mm; line-height: 1.15; }
+  .sub { color: var(--tinta2); font-size: 11pt; margin-bottom: 5mm; }
+  h2 { font-size: 14pt; margin: 7mm 0 2.5mm; padding-bottom: 1.2mm; border-bottom: 2px solid var(--ciano); break-after: avoid; }
+  h2 .num { color: var(--ciano); margin-right: 2mm; }
+  p { margin: 0 0 2.5mm; }
+  ul { margin: 0 0 2.5mm; padding-left: 5.5mm; }
+  li { margin-bottom: 1mm; }
+  code { font-family: "SF Mono", Menlo, Monaco, monospace; font-size: 9pt; background: var(--fundo-cod); padding: 0.2mm 1mm; border-radius: 2px; white-space: nowrap; }
+  table { width: 100%; border-collapse: collapse; margin: 1mm 0 3mm; font-size: 9.8pt; }
+  th { text-align: left; font-size: 8.5pt; text-transform: uppercase; letter-spacing: .03em; color: var(--tinta2); border-bottom: 1.5px solid var(--tinta2); padding: 1.3mm 2mm; }
+  td { border-bottom: 1px solid var(--linha); padding: 1.5mm 2mm; vertical-align: top; }
+  td code { white-space: normal; overflow-wrap: anywhere; }
+  tr { break-inside: avoid; }
+  .modulo { border: 1px solid var(--linha); border-left: 4px solid var(--ciano); border-radius: 3px; padding: 2.5mm 4mm 1mm; margin: 0 0 3.5mm; break-inside: avoid; }
+  .modulo h3 { font-size: 11.5pt; margin: 0 0 1mm; }
+  .modulo h3 code { font-size: 10.5pt; background: none; padding: 0; color: #0b3c4a; }
+  .modulo .papel { color: var(--tinta2); margin-bottom: 1.5mm; }
+  .chave { font-weight: 700; }
+  .ideia { background: #fdf3ec; border-left: 4px solid var(--laranja); padding: 2.5mm 4mm; margin: 2mm 0 4mm; break-inside: avoid; }
+  .ideia p:last-child { margin: 0; }
+  figure { margin: 2mm 0 3mm; text-align: center; break-inside: avoid; }
+  figcaption { font-size: 8.8pt; color: var(--tinta2); margin-top: 1mm; }
+  ol.passos { padding-left: 6mm; margin: 0 0 3mm; }
+  ol.passos li { margin-bottom: 1.4mm; }
+  .quebra { break-before: page; }
+</style>
+</head>
+<body>
+
+<h1>Agregador de Preços de Eletrônicos<br>O backend em resumo</h1>
+<div class="sub">Guia rápido para a apresentação: o que cada arquivo Python faz e como as partes conversam. · Grupo VI · Sistemas Distribuídos · Tema 6</div>
+
+<h2><span class="num">1</span>A ideia em uma frase</h2>
+<p>O <b>cliente</b> pede um produto, o <b>agregador</b> pergunta para <b>4 lojas</b> (cada uma é um processo separado, com porta própria) e devolve as ofertas ordenadas, apontando o <b>menor preço</b> e o <b>melhor custo-benefício</b>. As lojas podem ser consultadas <b>uma de cada vez</b> (sequencial) ou <b>todas ao mesmo tempo</b> (concorrente, uma thread por loja), e o trabalho mede essa diferença.</p>
+
+<figure>
+<svg viewBox="0 0 680 230" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="11">
+  <defs><marker id="seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4a4945"/></marker></defs>
+  <rect x="10" y="30" width="120" height="44" rx="5" fill="#f4f3ef" stroke="#4a4945"/>
+  <text x="70" y="50" text-anchor="middle" font-weight="700">cliente.py</text><text x="70" y="65" text-anchor="middle" fill="#4a4945" font-size="9.5">terminal</text>
+  <rect x="10" y="150" width="120" height="44" rx="5" fill="#f4f3ef" stroke="#4a4945"/>
+  <text x="70" y="170" text-anchor="middle" font-weight="700">Navegador</text><text x="70" y="185" text-anchor="middle" fill="#4a4945" font-size="9.5">interface web</text>
+  <rect x="170" y="150" width="130" height="44" rx="5" fill="#fdf3ec" stroke="#c2410c"/>
+  <text x="235" y="170" text-anchor="middle" font-weight="700">gateway_http.py</text><text x="235" y="185" text-anchor="middle" fill="#4a4945" font-size="9.5">HTTP :8080</text>
+  <rect x="340" y="85" width="130" height="60" rx="5" fill="#eef6f8" stroke="#0e7490" stroke-width="1.5"/>
+  <text x="405" y="108" text-anchor="middle" font-weight="700">agregador.py</text><text x="405" y="123" text-anchor="middle" fill="#4a4945" font-size="9.5">TCP :8000</text><text x="405" y="137" text-anchor="middle" fill="#4a4945" font-size="9.5">1 thread por cliente</text>
+  <g font-size="10">
+    <rect x="530" y="20" width="140" height="34" rx="5" fill="#fff" stroke="#4a4945"/><text x="600" y="41" text-anchor="middle">KabumSim :9001</text>
+    <rect x="530" y="72" width="140" height="34" rx="5" fill="#fff" stroke="#4a4945"/><text x="600" y="93" text-anchor="middle">PichauSim :9002</text>
+    <rect x="530" y="124" width="140" height="34" rx="5" fill="#fff" stroke="#4a4945"/><text x="600" y="145" text-anchor="middle">TerabyteSim :9003</text>
+    <rect x="530" y="176" width="140" height="34" rx="5" fill="#fff" stroke="#4a4945"/><text x="600" y="197" text-anchor="middle">MagaluTechSim :9004</text>
+  </g>
+  <path d="M130,52 C250,52 280,100 338,108" fill="none" stroke="#4a4945" marker-end="url(#seta)"/>
+  <text x="222" y="62" fill="#0e7490" font-size="9.5">TCP · JSON</text>
+  <path d="M130,172 L168,172" fill="none" stroke="#c2410c" marker-end="url(#seta)"/>
+  <text x="137" y="164" fill="#c2410c" font-size="9">HTTP</text>
+  <path d="M300,165 C320,160 325,140 338,130" fill="none" stroke="#4a4945" marker-end="url(#seta)"/>
+  <text x="300" y="214" fill="#0e7490" font-size="9.5">TCP</text>
+  <path d="M470,105 L528,37" fill="none" stroke="#0e7490" marker-end="url(#seta)"/>
+  <path d="M470,110 L528,89" fill="none" stroke="#0e7490" marker-end="url(#seta)"/>
+  <path d="M470,120 L528,141" fill="none" stroke="#0e7490" marker-end="url(#seta)"/>
+  <path d="M470,128 L528,193" fill="none" stroke="#0e7490" marker-end="url(#seta)"/>
+</svg>
+<figcaption>Cada caixa do backend é um processo. Toda a comunicação interna é por socket TCP; HTTP só existe entre o navegador e o gateway.</figcaption>
+</figure>
+
+<h2><span class="num">2</span>Os arquivos, um por um</h2>
+
+<div class="modulo">
+<h3><code>config.py</code> — as configurações</h3>
+<div class="papel">Só guarda valores fixos, para todo o sistema usar os mesmos.</div>
+<ul>
+  <li><span class="chave"><code>LOJAS</code></span>: a lista das 4 lojas, com nome, porta (9001–9004) e latência padrão (150 ms).</li>
+  <li><span class="chave">Portas</span>: agregador 8000, gateway 8080.</li>
+  <li><span class="chave">Prazos</span>: <code>TIMEOUT_LOJA</code> = 2,5 s (quanto o agregador espera cada loja) e <code>TIMEOUT_OCIOSO_SERVIDOR</code> = 5 s (quanto um servidor espera quem conectou e não mandou nada).</li>
+</ul>
+</div>
+
+<div class="modulo">
+<h3><code>protocolo.py</code> — a "língua" que todos falam</h3>
+<div class="papel">Define o formato das mensagens e as funções para enviar e receber pelo socket.</div>
+<ul>
+  <li><span class="chave">Formato</span>: cada mensagem é <b>um JSON em uma linha, terminado por <code>\n</code></b>. Uma conexão = uma pergunta + uma resposta.</li>
+  <li><span class="chave"><code>enviar_json</code> / <code>receber_json</code></span>: mandam e leem uma mensagem (a leitura junta pedaços até achar o <code>\n</code> e recusa mais de 64 KB).</li>
+  <li><span class="chave"><code>requisitar</code></span>: conecta, envia, recebe e fecha. É usada por todo mundo.</li>
+  <li><span class="chave"><code>validar_pesquisa</code></span>: confere produto, modo, critério e atraso. O agregador e o gateway usam a mesma função.</li>
+  <li><span class="chave">Constantes</span>: operações (<code>consultar</code>, <code>listar_produtos</code>, <code>ping</code>) e status (<code>sucesso</code>, <code>nao_encontrado</code>, <code>erro_comunicacao</code>, <code>timeout</code>…).</li>
+</ul>
+</div>
+
+<div class="modulo">
+<h3><code>servidor_base.py</code> — o servidor TCP reutilizável</h3>
+<div class="papel">A classe <code>ServidorTCPMultithread</code>, usada tanto pelas lojas quanto pelo agregador.</div>
+<ul>
+  <li>Abre a porta e fica aceitando conexões; <b>cada conexão ganha uma thread</b>, então vários clientes são atendidos ao mesmo tempo.</li>
+  <li>Recebe uma função <code>tratar(requisicao)</code> com a regra de negócio: a loja passa a dela, o agregador passa a dele.</li>
+  <li>Se der erro dentro de <code>tratar</code>, responde <code>erro_interno</code> e <b>continua no ar</b>.</li>
+</ul>
+</div>
+
+<div class="modulo">
+<h3><code>loja_server.py</code> — uma loja</h3>
+<div class="papel">Cada loja é um processo: <code>python3 loja_server.py KabumSim 9001 150</code>.</div>
+<ul>
+  <li>Lê o catálogo em <code>dados/lojas/&lt;Loja&gt;.json</code>.</li>
+  <li>A classe <code>Loja</code> responde às consultas: <b>espera a latência</b> (<code>time.sleep</code>, simulando uma loja real), procura o produto pelo nome ou pela chave e devolve a oferta mais barata (preço, frete, total, nota, garantia).</li>
+  <li>Responde <code>ping</code> na hora, para dizer que está viva.</li>
+</ul>
+</div>
+
+<div class="modulo">
+<h3><code>agregador.py</code> — o centro do sistema</h3>
+<div class="papel">Recebe a pesquisa, consulta as lojas, junta tudo e responde. Classe principal: <code>Agregador</code>.</div>
+<ul>
+  <li><span class="chave"><code>consultar_loja</code></span>: pergunta a uma loja. Se ela falhar, não quebra nada: devolve <code>erro_comunicacao</code> ou <code>timeout</code>.</li>
+  <li><span class="chave"><code>consultar_todas</code></span>: <b>sequencial</b> = um laço, uma loja depois da outra; <b>concorrente</b> = uma thread por loja, todas ao mesmo tempo.</li>
+  <li><span class="chave"><code>executar_busca</code></span>: separa ofertas, "não encontrado" e falhas, calcula o score, ordena e aponta o menor preço e o melhor custo-benefício.</li>
+  <li><span class="chave"><code>calcular_score_custo_beneficio</code></span>: <code>nota² × (1 + 0,01 × garantia) / preço total × 1000</code>; maior é melhor.</li>
+  <li><span class="chave"><code>validar_resposta_loja</code></span>: se uma loja mandar dados errados, só ela vira falha.</li>
+  <li><span class="chave"><code>RegistroPesquisas</code></span>: grava o tempo de cada pesquisa em <code>resultados/log_pesquisas.csv</code> (com lock, porque várias threads escrevem).</li>
+</ul>
+</div>
+
+<div class="modulo">
+<h3><code>cliente.py</code> — o usuário no terminal</h3>
+<div class="papel">Exemplo: <code>python3 cliente.py rtx 4060</code>, ou sem argumentos para o menu interativo.</div>
+<ul>
+  <li><span class="chave"><code>requisitar_agregador</code></span>: manda a pesquisa ao agregador por TCP.</li>
+  <li><span class="chave"><code>comparar</code></span>: faz a pesquisa nos dois modos e calcula o <b>speedup</b> (tempo sequencial ÷ tempo concorrente).</li>
+  <li><span class="chave"><code>disparar_clientes_simultaneos</code></span>: simula N clientes ao mesmo tempo (usado no teste de carga).</li>
+  <li><span class="chave"><code>exibir_relatorio</code></span>: imprime a tabela de ofertas, os destaques e os alertas de lojas com problema.</li>
+  <li>Se o agregador estiver fora do ar, mostra uma mensagem amigável (<code>ErroCliente</code>), sem <i>traceback</i>.</li>
+</ul>
+</div>
+
+<div class="modulo">
+<h3><code>iniciar_servicos.py</code> — liga tudo de uma vez</h3>
+<div class="papel"><code>python3 iniciar_servicos.py</code> sobe as 4 lojas e o agregador como processos separados.</div>
+<ul>
+  <li>A classe <code>Ambiente</code> cria os processos, espera cada um responder <code>ping</code> e consegue <b>derrubar e religar uma loja</b> (usado na demonstração de falhas).</li>
+  <li>Recusa portas já ocupadas e, com Ctrl+C ou <code>kill</code>, encerra todos os processos (nada fica rodando escondido).</li>
+</ul>
+</div>
+
+<div class="modulo">
+<h3><code>gateway_http.py</code> — a ponte para a interface web</h3>
+<div class="papel">O navegador não fala TCP puro, então o gateway recebe HTTP e repassa ao agregador por TCP, como se fosse mais um cliente.</div>
+<ul>
+  <li>Rotas principais: <code>/api/consultar</code> (pesquisa), <code>/api/lojas</code> (quem está no ar), <code>/api/lojas/&lt;nome&gt;/derrubar|subir</code>, <code>/api/carga</code> (vários clientes) e <code>/api/experimentos</code> (tabelas e gráficos).</li>
+  <li>Erros viram JSON com código HTTP (400 entrada inválida, 404 não existe, 502 agregador fora do ar).</li>
+</ul>
+</div>
+
+<div class="modulo">
+<h3><code>experimentos.py</code> e <code>graficos.py</code> — as medições</h3>
+<div class="papel">Rodam os 5 experimentos do enunciado e desenham os gráficos.</div>
+<ul>
+  <li><code>experimentos.py</code> sobe os processos reais, faz as pesquisas pelo cliente TCP e grava <code>resultados/*.csv</code>: (1–2) sequencial × concorrente, (3) latências diferentes, (4) até 50 clientes simultâneos, (5) loja fora do ar, caindo, lenta e recuperada.</li>
+  <li><code>graficos.py</code> lê esses CSVs e gera os 6 gráficos PNG (é o único arquivo que usa matplotlib).</li>
+</ul>
+</div>
+
+<h2><span class="num">3</span>O caminho de uma pesquisa</h2>
+<ol class="passos">
+  <li>O cliente envia <code>{"operacao":"consultar","produto":"rtx 4060","modo":"concorrente"}</code> para a porta 8000.</li>
+  <li>O agregador cria uma thread para esse cliente e valida o pedido.</li>
+  <li>No modo concorrente, cria <b>4 threads</b>, uma por loja, e cada uma faz sua consulta TCP.</li>
+  <li>Cada loja espera a sua latência (150 ms), procura o produto e responde.</li>
+  <li>Como as esperas acontecem juntas, o total fica perto de <b>150 ms</b>. No sequencial seria perto de <b>600 ms</b> (4 × 150).</li>
+  <li>O agregador ordena as ofertas, grava o tempo no CSV e responde ao cliente, que imprime o relatório.</li>
+</ol>
+
+<div class="ideia"><p><b>Resultado medido:</b> speedup de <b>3,97×</b> (621 ms no sequencial → 156,5 ms no concorrente) e <b>nenhuma falha</b> com 50 clientes simultâneos. Exemplo de pesquisa: para "rtx 4060", o menor preço é da <b>PichauSim (R$ 1.864,00)</b> e o melhor custo-benefício é da <b>KabumSim</b>, que tem nota e garantia maiores.</p></div>
+
+<h2><span class="num">4</span>O que acontece quando algo dá errado</h2>
+<p>A regra é: <b>uma loja com problema não estraga a pesquisa</b>. Ela aparece em <code>ocorrencias_ou_falhas</code>, e o resultado sai com as outras lojas.</p>
+<table>
+<tr><th style="width:32%">Situação</th><th style="width:38%">Como o código percebe</th><th>Resultado</th></tr>
+<tr><td>Loja desligada</td><td>Conexão recusada</td><td><code>erro_comunicacao</code> na hora</td></tr>
+<tr><td>Loja cai no meio da consulta</td><td>A conexão fecha sem resposta</td><td><code>erro_comunicacao</code> na hora</td></tr>
+<tr><td>Loja lenta ou travada</td><td>Passou de 2,5 s</td><td><code>timeout</code></td></tr>
+<tr><td>Loja manda dados errados</td><td><code>validar_resposta_loja</code></td><td>Falha só daquela loja</td></tr>
+<tr><td>Erro dentro do servidor</td><td><code>except</code> no <code>servidor_base</code></td><td><code>erro_interno</code>; o servidor continua no ar</td></tr>
+<tr><td>Agregador desligado</td><td>Cliente ou gateway não conecta</td><td>Mensagem amigável / HTTP 502</td></tr>
+</table>
+
+<div style="break-inside: avoid"><h2><span class="num">5</span>Onde estão as threads</h2>
+<table>
+<tr><th style="width:42%">Onde</th><th>Para quê</th></tr>
+<tr><td>Servidor (lojas e agregador)</td><td>Uma thread por conexão: atende vários clientes ao mesmo tempo.</td></tr>
+<tr><td>Agregador, modo concorrente</td><td>Uma thread por loja. Cada uma escreve na sua posição da lista, então <b>não precisa de lock</b>.</td></tr>
+<tr><td>Log CSV e contador de clientes</td><td>Protegidos com <code>threading.Lock</code>, porque são compartilhados.</td></tr>
+<tr><td>Teste de carga / Experimento 4</td><td><code>threading.Barrier</code> faz os N clientes começarem juntos.</td></tr>
+</table></div>
+<p>Mesmo com o GIL do Python, o ganho aparece: enquanto uma thread espera a resposta da loja, as outras continuam rodando.</p>
+
+<h2><span class="num">6</span>Testes</h2>
+<p><b>82 testes</b> automatizados (<code>python3 -m unittest discover -s tests</code>) cobrem: o protocolo, a consolidação e a ordenação, o ganho de desempenho, as falhas de loja, vários clientes ao mesmo tempo, o gateway HTTP e a demonstração completa com processos reais.</p>
+
+</body>
+</html>

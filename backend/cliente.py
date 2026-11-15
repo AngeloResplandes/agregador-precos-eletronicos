@@ -145,7 +145,8 @@ def executar(produto: str, modo: str, criterio: str, atraso_ms=None, **conexao) 
         exibir_relatorio(requisitar_agregador(produto, modo, criterio, atraso_ms, **conexao))
         return
     r = comparar(produto, criterio, atraso_ms, **conexao)
-    exibir_relatorio(r["concorrente"])
+    for modo in protocolo.MODOS_VALIDOS:  # sequencial e depois concorrente
+        exibir_relatorio(r[modo])
     if r["speedup"] is not None:
         print(" COMPARATIVO DE DESEMPENHO:")
         print(f"    * Consulta sequencial : {r['sequencial']['tempo_total_ms']} ms")

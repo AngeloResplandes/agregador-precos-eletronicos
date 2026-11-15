@@ -113,7 +113,7 @@ O diagrama UML está em `02_modelagem.md`.
 
 ### UC02 — Comparar estratégias sequencial × concorrente
 - **Ator:** Usuário comprador · **Requisitos:** RF03, RF04, RF11
-- **Fluxo:** o usuário escolhe o modo "comparar". O cliente executa o UC01 nos dois modos e exibe os dois tempos e o speedup.
+- **Fluxo:** o usuário escolhe o modo "comparar". O cliente executa o UC01 nos dois modos e exibe o relatório de cada um, os dois tempos e o speedup.
 
 ### UC03 — Listar catálogo
 - **Ator:** Usuário comprador · **Requisito:** RF10

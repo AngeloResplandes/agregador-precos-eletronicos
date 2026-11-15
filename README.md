@@ -168,7 +168,7 @@ python3 experimentos.py
 cd backend && python3 -m unittest discover -s tests -v
 ```
 
-São 82 testes: protocolo, ordenação, desempenho, falhas (loja desligada, queda, timeout, resposta inválida), validação, registro em CSV, múltiplos clientes, serviço de loja, gerenciamento de processos, o roteiro da demonstração com processos reais (`tests/test_sistema.py`, pulado se as portas 8000/9001–9004 estiverem ocupadas) e o gateway HTTP da interface (`tests/test_gateway.py`). O plano de verificação e testes está em `docs/05_plano_verificacao_testes.md`.
+São 83 testes: protocolo, ordenação, desempenho, falhas (loja desligada, queda, timeout, resposta inválida), validação, registro em CSV, múltiplos clientes, serviço de loja, gerenciamento de processos, o roteiro da demonstração com processos reais (`tests/test_sistema.py`, pulado se as portas 8000/9001–9004 estiverem ocupadas) e o gateway HTTP da interface (`tests/test_gateway.py`). O plano de verificação e testes está em `docs/05_plano_verificacao_testes.md`.
 
 Na interface, `npm run build` (em `frontend/`) também confere os tipos TypeScript e `npx oxlint src` aponta problemas de código.
 
