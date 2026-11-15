@@ -25,41 +25,38 @@ O documento está organizado assim:
 
 ## 2. Requisitos
 
-A especificação completa está em `01_documento_requisitos.md`. Em resumo:
+A especificação completa está em `01_documento_requisitos.md`, organizada como pede a seção 5 do enunciado: descrição do problema, objetivo, escopo, atores, requisitos funcionais e não funcionais, restrições e critérios de aceitação. Em resumo:
 
+- **Escopo:** cliente de linha de comando e interface web, agregador TCP, quatro lojas com catálogos simulados, consultas sequenciais e concorrentes, ordenação por preço e custo-benefício, tratamento de falhas, registro de tempos e os cinco experimentos. Ficam de fora lojas e preços reais, autenticação, pagamento, banco de dados e execução entre máquinas.
 - **Atores:** Usuário comprador, Pesquisador (experimentos) e Serviço de loja (ator secundário).
-- **Requisitos funcionais (RF01–RF12):**
-  - informar produto, modo e critério;
-  - consultar ≥ 4 lojas independentes;
-  - consultas sequenciais e concorrentes;
-  - apresentar ofertas com specs, frete, garantia e avaliação;
-  - ordenar por preço total ou custo-benefício;
-  - identificar o menor preço e o melhor custo-benefício;
-  - registrar o tempo de execução;
-  - informar lojas sem o produto e lojas com falha;
-  - listar o catálogo;
-  - comparar as estratégias (speedup);
-  - executar os experimentos automaticamente.
-- **Requisitos não funcionais (RNF01–RNF08):**
-  - comunicação TCP real;
-  - concorrência com threads;
-  - atendimento a múltiplos clientes (≥ 50 simultâneos);
-  - tratamento de falhas sem derrubar o agregador;
-  - tempo concorrente próximo da maior latência;
-  - protocolo JSON documentado;
-  - latência configurável;
-  - Python 3 com biblioteca padrão.
-- **Critérios de aceitação:** 15 critérios (CA01–CA15), cada um ligado a um teste automatizado ou a um experimento.
+- **Requisitos funcionais (RF01–RF08):** um para cada exemplo da seção 5.2 do enunciado, adaptado ao tema.
+  - RF01 informar os parâmetros da pesquisa (produto, com a lista do catálogo; modo; critério);
+  - RF02 consultar ≥ 4 lojas independentes, cada uma em seu processo;
+  - RF03 consultas sequenciais;
+  - RF04 consultas concorrentes com threads;
+  - RF05 apresentar as ofertas (specs, frete, garantia, avaliação, tempo por loja) e as lojas sem o produto ou com falha;
+  - RF06 ordenar por preço total ou custo-benefício;
+  - RF07 identificar o menor preço e o melhor custo-benefício;
+  - RF08 registrar o tempo de execução (total e por loja) e comparar os modos (speedup).
+- **Requisitos não funcionais (RNF01–RNF05):** um para cada exemplo da seção 5.3.
+  - RNF01 comunicação por sockets TCP, com o protocolo JSON documentado;
+  - RNF02 estratégia concorrente com threads (tempo ≈ maior latência);
+  - RNF03 atendimento a múltiplas conexões simultâneas (≥ 50 clientes);
+  - RNF04 tratamento de falhas de comunicação sem derrubar o agregador;
+  - RNF05 experimentos de desempenho (latência configurável, execução automatizada).
+- **Interfaces:** o `cliente.py` e a interface web (via gateway HTTP, mais um cliente TCP do agregador) atendem os mesmos requisitos.
+- **Restrições:** Python 3.10+ com biblioteca padrão e sockets TCP reais, pelo menos quatro serviços em processos e portas próprios (9001–9004, agregador em 8000), dados simulados em JSON e execução local.
+- **Critérios de aceitação:** 18 critérios (CA01–CA18), cada um ligado a um teste automatizado ou a um experimento.
 
 ## 3. Modelagem
 
 Os diagramas completos estão em `02_modelagem.md`.
 
-**Casos de uso.** UC01 Pesquisar produto, UC02 Comparar estratégias, UC03 Listar catálogo e UC04 Executar experimentos. "Ordenar/identificar melhor oferta" e "Registrar tempo" são incluídos pelo UC01, e "Tratar falha de loja" o estende.
+**Casos de uso (UML).** UC01 Pesquisar produto, UC02 Comparar estratégias, UC03 Listar catálogo, UC04 Executar experimentos e UC05 Usar a interface web. "Ordenar e identificar melhor oferta" e "Registrar tempo de execução" são incluídos pelo UC01, e "Tratar falha de loja" o estende. UC02, UC04 e UC05 incluem o UC01; o UC05 também inclui o UC02.
 
 ![Casos de uso](img/casos_de_uso.png)
 
-**Arquitetura.** São três camadas de processos: clientes → agregador (porta 8000) → quatro lojas (portas 9001–9004). Toda a comunicação usa TCP com mensagens JSON delimitadas por quebra de linha.
+**Arquitetura.** São três camadas de processos: clientes → agregador (porta 8000) → quatro lojas (portas 9001–9004). Toda a comunicação entre eles usa TCP com mensagens JSON delimitadas por quebra de linha. O navegador fala HTTP apenas com o gateway (porta 8080), que é mais um cliente TCP do agregador.
 
 ![Arquitetura](img/arquitetura.png)
 

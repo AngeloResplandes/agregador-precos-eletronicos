@@ -38,9 +38,9 @@ Legenda de situação: **OK** atendido · **CORRIGIDO** não atendia e foi corri
 | # | Exigência | Onde é atendida | Situação |
 |---|---|---|---|
 | V10 | Descrição do problema, objetivo, escopo, atores, RF, RNF, restrições, critérios de aceitação | `01_documento_requisitos.md`, seções 1–9 | OK |
-| V11 | Pelo menos 8 requisitos funcionais | RF01–RF12 (12) | OK |
-| V12 | Pelo menos 5 requisitos não funcionais | RNF01–RNF08 (8) | OK |
-| V13 | Diagrama de casos de uso UML | `02_modelagem.md` §1, `img/casos_de_uso.png` | OK |
+| V11 | Pelo menos 8 requisitos funcionais | RF01–RF08 (8), um para cada exemplo da seção 5.2, adaptados ao tema | **CORRIGIDO** (NC09) |
+| V12 | Pelo menos 5 requisitos não funcionais | RNF01–RNF05 (5), um para cada exemplo da seção 5.3 | **CORRIGIDO** (NC08, NC09) |
+| V13 | Diagrama de casos de uso UML | `02_modelagem.md` §1, `img/casos_de_uso.png` (notação UML: atores, fronteira do sistema, «include»/«extend»; fonte `diagramas/casos_de_uso.svg`) | **CORRIGIDO** (NC08) |
 | V14 | Diagrama de arquitetura | `02_modelagem.md` §2, `img/arquitetura.png` | OK |
 | V15 | Diagrama de sequência de uma operação principal | `02_modelagem.md` §3, `img/sequencia_pesquisa.png` | OK |
 
@@ -92,8 +92,8 @@ Legenda de situação: **OK** atendido · **CORRIGIDO** não atendia e foi corri
 | V42 | Modelagem (casos de uso, arquitetura, sequência) | `02_modelagem.md/.docx` | OK |
 | V43 | Código-fonte completo e instruções de execução | `backend/` (sistema), `frontend/` (interface web) + `README.md` | OK |
 | V44 | Relatório técnico (introdução, requisitos, modelagem, implementação, experimentos, resultados, conclusão) | `04_relatorio_tecnico.md/.docx` | OK |
-| V45 | Slides | deck no Claude Design (19 slides, nas 5 partes sugeridas pelo enunciado, com agenda e tempos, interface web e gráficos com os números de `resultados/`), exportado para `docs/apresentacao.pptx` | OK |
-| V46 | Demonstração prática (5 min) | roteiro da seção 3.5, um passo por experimento da seção 9 (Exp. 1–5), e slide 12 (roteiro) | **CORRIGIDO** (NC07) |
+| V45 | Slides | deck no Claude Design (20 slides, com o slide "Análise de requisitos" (escopo, atores, restrições e critérios), nas 5 partes sugeridas pelo enunciado, com agenda e tempos, interface web e gráficos com os números de `resultados/`), exportado para `docs/apresentacao.pptx` | OK |
+| V46 | Demonstração prática (5 min) | roteiro da seção 3.5, um passo por experimento da seção 9 (Exp. 1–5), e slide 13 do deck (roteiro) | **CORRIGIDO** (NC07) |
 | V47 | Referências | relatório, seção Referências | OK |
 
 ## 3. Plano de testes
@@ -119,11 +119,11 @@ cd backend && python3 -m unittest discover -s tests -v
 
 | ID | Caso | Resultado esperado | Teste automatizado | Req. |
 |---|---|---|---|---|
-| CT01 | Mensagem com acentos ida e volta | objeto igual | `test_ida_e_volta_com_acentos` | RNF06 |
-| CT02 | Mensagem fragmentada em vários `send` | remontada até o `\n` | `test_mensagem_fragmentada` | RNF06 |
+| CT01 | Mensagem com acentos ida e volta | objeto igual | `test_ida_e_volta_com_acentos` | RNF01 |
+| CT02 | Mensagem fragmentada em vários `send` | remontada até o `\n` | `test_mensagem_fragmentada` | RNF01 |
 | CT03 | JSON inválido | `MensagemInvalida` | `test_json_invalido` | RNF04 |
-| CT04 | JSON que não é objeto | `MensagemInvalida` | `test_json_que_nao_e_objeto` | RNF06 |
-| CT05 | Mensagem > 64 KB | `MensagemInvalida` | `test_mensagem_grande_demais` | RNF06 |
+| CT04 | JSON que não é objeto | `MensagemInvalida` | `test_json_que_nao_e_objeto` | RNF01 |
+| CT05 | Mensagem > 64 KB | `MensagemInvalida` | `test_mensagem_grande_demais` | RNF01 |
 | CT06 | Conexão fechada sem `\n` | `ConexaoEncerrada` | `test_conexao_encerrada_sem_terminador` | RNF04 |
 | CT07 | Par não envia nada | `socket.timeout` | `test_timeout_sem_dados` | RNF04 |
 
@@ -134,15 +134,15 @@ cd backend && python3 -m unittest discover -s tests -v
 | CT08 | "rtx 4060", critério preço | 4 ofertas em ordem crescente de preço total; menor preço PichauSim R$ 1.864,00 | `test_ordena_por_preco_e_identifica_menor` | RF06, RF07 / CA01 |
 | CT09 | Critério custo-benefício | ordem decrescente de score | `test_ordena_por_custo_beneficio`, `test_score_custo_beneficio` | RF06 / CA02 |
 | CT10 | Mesma pesquisa nos dois modos | mesmo resultado e mesma ordem | `test_sequencial_e_concorrente_dao_mesmo_resultado` | RF03, RF04 / CA03 |
-| CT11 | 4 lojas × 100 ms | sequencial ≥ 400 ms, concorrente < 250 ms, speedup > 2,5 | `test_concorrente_mais_rapido_que_sequencial` | RNF05 / CA04 |
-| CT12 | Latências 50/100/150/200 ms | sequencial ≈ soma; concorrente ≈ máximo | `test_latencia_heterogenea` | RNF05 / CA05 |
-| CT13 | Loja desligada | 3 ofertas; `erro_comunicacao` | `test_loja_desligada` | RF09 / CA07 |
-| CT14 | Loja cai durante a consulta | 3 ofertas; `ConexaoEncerrada` sem esperar o timeout | `test_loja_cai_durante_a_consulta` | RF09 / CA08 |
-| CT15 | Loja mais lenta que o timeout | `timeout`; pesquisa limitada pelo timeout | `test_loja_lenta_gera_timeout` | RF09 / CA09 |
+| CT11 | 4 lojas × 100 ms | sequencial ≥ 400 ms, concorrente < 250 ms, speedup > 2,5 | `test_concorrente_mais_rapido_que_sequencial` | RNF02 / CA04 |
+| CT12 | Latências 50/100/150/200 ms | sequencial ≈ soma; concorrente ≈ máximo | `test_latencia_heterogenea` | RNF02 / CA05 |
+| CT13 | Loja desligada | 3 ofertas; `erro_comunicacao` | `test_loja_desligada` | RNF04 / CA07 |
+| CT14 | Loja cai durante a consulta | 3 ofertas; `ConexaoEncerrada` sem esperar o timeout | `test_loja_cai_durante_a_consulta` | RNF04 / CA08 |
+| CT15 | Loja mais lenta que o timeout | `timeout`; pesquisa limitada pelo timeout | `test_loja_lenta_gera_timeout` | RNF04 / CA09 |
 | CT16 | Todas as lojas fora | `nao_encontrado` com 4 falhas | `test_todas_as_lojas_fora` | RNF04 |
 | CT17 | Loja responde `sucesso` sem campos da oferta | `erro_comunicacao` para ela; 3 ofertas nos dois critérios | `test_loja_com_resposta_incompleta` | RNF04 / CA13 |
 | CT18 | Loja responde preço em texto | `erro_comunicacao`; 3 ofertas | `test_loja_com_preco_nao_numerico` | RNF04 / CA13 |
-| CT19 | `listar_produtos` com loja de resposta malformada | catálogo das outras lojas + falha registrada | `test_listar_com_loja_de_resposta_invalida` | RF10 |
+| CT19 | `listar_produtos` com loja de resposta malformada | catálogo das outras lojas + falha registrada | `test_listar_com_loja_de_resposta_invalida` | RF01 |
 | CT20 | Requisições inválidas (operação, produto vazio ou não texto, modo, critério, `atraso_ms` negativo, acima de 10000, booleano, fracionário ou texto) | `erro_requisicao` | `test_requisicoes_invalidas` (agregador e loja) | CA10 |
 | CT21 | Registro em CSV | cabeçalho + uma linha por pesquisa | `test_registra_tempo_em_csv` | RF08 / CA11 |
 | CT22 | Tempo de cada loja no CSV | coluna `tempos_lojas_ms` com as 4 lojas | `test_registra_tempo_de_cada_loja` | RF08 / CA11 |
@@ -151,11 +151,11 @@ cd backend && python3 -m unittest discover -s tests -v
 | CT25 | Cliente conecta e não envia nada | `erro_requisicao` após 5 s; servidor segue | `test_cliente_ocioso_e_desconectado` | RNF04 |
 | CT26 | Exceção no tratamento | `erro_interno`; próxima requisição atendida | `test_erro_interno_nao_derruba_servidor` | RNF04 / CA10 |
 | CT54 | `protocolo.ping` | `True` com o serviço no ar; `False` com a porta sem serviço | `test_ping` (`TestValidacaoEPing`) | RNF04 |
-| CT55 | `cliente.comparar` (usado pela CLI e pelo gateway) | os dois modos na resposta e speedup > 1,5 | `test_comparar_os_dois_modos` | RF11 |
+| CT55 | `cliente.comparar` (usado pela CLI e pelo gateway) | os dois modos na resposta e speedup > 1,5 | `test_comparar_os_dois_modos` | RF08 |
 | CT56 | `cliente.disparar_clientes_simultaneos` com 10 clientes (usado pelo gateway e pelo Exp. 4) | 10 tempos e nenhuma falha | `test_disparar_clientes_simultaneos` | RNF03 |
 | CT57 | O mesmo com o agregador fora do ar | todos os clientes com o motivo da falha, sem exceção | `test_clientes_simultaneos_com_agregador_fora` | RNF04 |
 | CT58 | `iniciar_servicos.ler_latencias` (opção `--latencias` do gateway e do `iniciar_servicos.py`) | `"100,200,300,400"` vira lista; quantidade errada ou texto → erro do argparse | `test_ler_latencias` | RT2 |
-| CT67 | `cliente.executar` no modo comparar | imprime o relatório completo do sequencial, depois o do concorrente e por fim o comparativo com o speedup | `test_comparar_imprime_relatorio_dos_dois_modos` | RF11 |
+| CT67 | `cliente.executar` no modo comparar | imprime o relatório completo do sequencial, depois o do concorrente e por fim o comparativo com o speedup | `test_comparar_imprime_relatorio_dos_dois_modos` | RF08 |
 | CT68 | `cliente.py <produto> --clientes N` (Exp. 4 pelo terminal) | um lote de N clientes simultâneos por modo (só o escolhido, ou os dois em `comparar`), com tempo do lote, média/mín/máx, vazão e `Falhas: 0/N`; N fora de 1–50 ou não inteiro → erro do argparse | `test_cli_multiplos_clientes`, `test_cli_multiplos_clientes_compara_os_dois_modos`, `test_cli_clientes_fora_do_limite` | RNF03 / CA06 |
 
 Também ficam neste nível: `test_produto_inexistente`, `test_listar_produtos`, `test_ping`, `test_pesquisa_via_cliente`, `test_atraso_informado_pelo_cliente`, `test_listar`, `test_json_malformado_recebe_erro`, `test_agregador_fora_do_ar` (CA12) e os testes de `TestLoja` (busca por chave e por nome, item mais barato, listar, ping, validação).
@@ -167,21 +167,21 @@ Também ficam neste nível: `test_produto_inexistente`, `test_listar_produtos`, 
 | CT27 | Subir e derrubar uma loja como processo | responde; depois recusa conexão | `test_sobe_e_derruba_loja_como_processo` | RT2 |
 | CT28 | Subir loja em porta já ocupada | `RuntimeError` "em uso" | `test_porta_ocupada_e_detectada` | CA14 |
 | CT29 | Falha no meio da subida | o que já subiu é encerrado | `test_falha_ao_subir_encerra_o_que_ja_tinha_subido` | CA14 |
-| CT30 | `cliente.py --listar` | as 5 chaves do catálogo | `test_1_listar_catalogo` | RF10 / CA15 |
-| CT31 | `cliente.py rtx 4060` (modo comparar) | relatórios dos dois modos (sequencial e concorrente), 4/4 lojas, menor preço PichauSim, melhor custo-benefício, speedup | `test_2_comparar_sequencial_e_concorrente` | RF05–RF07, RF11 |
+| CT30 | `cliente.py --listar` | as 5 chaves do catálogo | `test_1_listar_catalogo` | RF01 / CA15 |
+| CT31 | `cliente.py rtx 4060` (modo comparar) | relatórios dos dois modos (sequencial e concorrente), 4/4 lojas, menor preço PichauSim, melhor custo-benefício, speedup | `test_2_comparar_sequencial_e_concorrente` | RF05–RF07, RF08 |
 | CT32 | `--criterio custo_beneficio` | ordenação por custo-benefício | `test_3_custo_beneficio` | RF06 |
 | CT33 | `--atraso -5` | `erro_requisicao`, sem traceback | `test_4_parametro_invalido_nao_gera_traceback` | RNF04 |
-| CT34 | Loja desligada e religada | 3/4 com `[ALERTA]`; depois 4/4 | `test_5_loja_desligada_e_recuperada` | RF09 / CA07 |
+| CT34 | Loja desligada e religada | 3/4 com `[ALERTA]`; depois 4/4 | `test_5_loja_desligada_e_recuperada` | RNF04 / CA07 |
 | CT35 | Segundo `iniciar_servicos.py` com o primeiro aberto | código 1, mensagem "em uso", sem "Ambiente pronto" | `test_6_segundo_ambiente_com_portas_ocupadas_falha` | CA14 |
 | CT36 | SIGTERM no `iniciar_servicos.py` | todas as portas liberadas | `test_sigterm_encerra_todos_os_processos` | CA14 |
-| CT69 | Console do `iniciar_servicos.py`: `derrubar <loja>`, `subir <loja>`, `status`, `ajuda` | derruba e sobe a loja (processo real, latência original), sem diferenciar maiúsculas; ação repetida, loja inexistente ou comando desconhecido → `[!]`, sem exceção | `test_console_derruba_e_sobe_loja`, `test_console_comandos_invalidos` | RF09 / CA15 |
+| CT69 | Console do `iniciar_servicos.py`: `derrubar <loja>`, `subir <loja>`, `status`, `ajuda` | derruba e sobe a loja (processo real, latência original), sem diferenciar maiúsculas; ação repetida, loja inexistente ou comando desconhecido → `[!]`, sem exceção | `test_console_derruba_e_sobe_loja`, `test_console_comandos_invalidos` | RNF04 / CA15 |
 | CT70 | Exp. 4 pela CLI com processos reais: `cliente.py rtx 4060 --clientes 10` | dois lotes (sequencial e concorrente) com `Falhas: 0/10` | `test_7_exp4_multiplos_clientes` | RNF03 / CA15 |
-| CT71 | Exp. 5 pela CLI: loja derrubada pelo console **durante** `cliente.py ssd --modo sequencial --atraso 1500` | a pesquisa conclui com 3/4 e `[ALERTA] MagaluTechSim: erro_comunicacao`, sem traceback; depois de `subir`, 4/4 | `test_8_exp5_loja_derrubada_durante_a_pesquisa` | RF09 / CA08 / CA15 |
+| CT71 | Exp. 5 pela CLI: loja derrubada pelo console **durante** `cliente.py ssd --modo sequencial --atraso 1500` | a pesquisa conclui com 3/4 e `[ALERTA] MagaluTechSim: erro_comunicacao`, sem traceback; depois de `subir`, 4/4 | `test_8_exp5_loja_derrubada_durante_a_pesquisa` | RNF04 / CA08 / CA15 |
 
 ### 3.5 Roteiro manual da demonstração (apresentação, ~5 min)
 
 O roteiro segue os cinco experimentos obrigatórios da seção 9 do enunciado, na mesma ordem, cada um com um comando
-real no terminal (é o mesmo do slide 12 do deck). Todos os comandos rodam em `backend/`.
+real no terminal (é o mesmo do slide do roteiro no deck, o 13º). Todos os comandos rodam em `backend/`.
 
 | Passo | Terminal | Comando | O que mostrar |
 |---|---|---|---|
@@ -210,17 +210,17 @@ diferentes: soma × máximo), `--criterio custo_beneficio` e `python3 cliente.py
 
 | ID | Caso | Resultado esperado | Teste automatizado | Req. |
 |---|---|---|---|---|
-| CT43 | `POST /api/consultar` "rtx 4060" | 200; menor preço PichauSim R$ 1.864,00 | `test_consulta_concorrente` | RF13 / CA16 |
-| CT44 | Modo `comparar` | 200 com `sequencial`, `concorrente` e `speedup` > 1,5 | `test_comparar_devolve_os_dois_modos_e_speedup` | RF11 / CA16 |
+| CT43 | `POST /api/consultar` "rtx 4060" | 200; menor preço PichauSim R$ 1.864,00 | `test_consulta_concorrente` | RF01 / CA16 |
+| CT44 | Modo `comparar` | 200 com `sequencial`, `concorrente` e `speedup` > 1,5 | `test_comparar_devolve_os_dois_modos_e_speedup` | RF08 / CA16 |
 | CT45 | Produto vazio, modo/critério/`atraso_ms` inválidos, JSON malformado | 400 `erro_requisicao` com `detalhe` | `test_requisicoes_invalidas`, `test_json_invalido` | RNF04 / CA16 |
 | CT46 | Agregador fora do ar | 502 `erro_comunicacao`, sem traceback; `/api/saude` informa offline; carga com todas as falhas contadas | `test_agregador_fora_do_ar` | RNF04 / CA17 |
-| CT47 | Uma loja desligada | 200 com 3/4 lojas e a falha em `ocorrencias_ou_falhas`; `/api/lojas` mostra a loja offline | `test_loja_desligada_aparece_na_consulta` | RF09 / CA17 |
-| CT48 | Derrubar e subir loja (processo real) | derrubada recusa conexão; subida volta a responder; 409 para ação repetida; 404 para loja/ação inexistente | `test_derrubar_e_subir_loja` | RF13 / CA17 |
-| CT49 | Gateway com `--externo` | derrubar loja → 409 | `test_derrubar_sem_gerenciar_processos` | RF13 |
+| CT47 | Uma loja desligada | 200 com 3/4 lojas e a falha em `ocorrencias_ou_falhas`; `/api/lojas` mostra a loja offline | `test_loja_desligada_aparece_na_consulta` | RNF04 / CA17 |
+| CT48 | Derrubar e subir loja (processo real) | derrubada recusa conexão; subida volta a responder; 409 para ação repetida; 404 para loja/ação inexistente | `test_derrubar_e_subir_loja` | RF01 / CA17 |
+| CT49 | Gateway com `--externo` | derrubar loja → 409 | `test_derrubar_sem_gerenciar_processos` | RF01 |
 | CT50 | Teste de carga com 20 clientes; 0, 51, "10", 2,5 clientes | 0 falhas e 20 tempos; valores fora do limite → 400 | `test_carga_com_20_clientes`, `test_carga_fora_do_limite` | RNF03 / CA18 |
-| CT51 | Gráficos e log | PNG servido com `image/png`; `../config.py` e arquivos não-PNG → 404; log em ordem inversa com `limite` | `test_grafico_png`, `test_resultados_nao_permite_sair_do_diretorio`, `test_log_mais_recentes_primeiro` | RF08, RF12 / CA18 |
-| CT52 | Interface compilada | `/` e `/assets/*` servidos de `frontend/dist`; rota desconhecida cai no `index.html`; sem build → 404 amigável | `TestGatewayInterfaceCompilada` | RF13 |
-| CT53 | Interface no navegador (manual) | pesquisa "rtx 4060" em comparar (speedup ≈ 4×); derrubar MagaluTechSim → 3/4 e alerta; subir → 4/4; carga com 50 clientes e 0 falhas; 6 gráficos e log; sem rolagem horizontal a 375 px; gateway parado → mensagem amigável | — | RF13 |
+| CT51 | Gráficos e log | PNG servido com `image/png`; `../config.py` e arquivos não-PNG → 404; log em ordem inversa com `limite` | `test_grafico_png`, `test_resultados_nao_permite_sair_do_diretorio`, `test_log_mais_recentes_primeiro` | RF08, RNF05 / CA18 |
+| CT52 | Interface compilada | `/` e `/assets/*` servidos de `frontend/dist`; rota desconhecida cai no `index.html`; sem build → 404 amigável | `TestGatewayInterfaceCompilada` | RF01 |
+| CT53 | Interface no navegador (manual) | pesquisa "rtx 4060" em comparar (speedup ≈ 4×); derrubar MagaluTechSim → 3/4 e alerta; subir → 4/4; carga com 50 clientes e 0 falhas; 6 gráficos e log; sem rolagem horizontal a 375 px; gateway parado → mensagem amigável | — | RF01 |
 
 Roteiro da demonstração pela interface: `python3 backend/gateway_http.py` (sobe lojas, agregador e gateway) e, em outro terminal, `cd frontend && npm run dev`; abrir `http://localhost:5173`.
 
@@ -292,12 +292,14 @@ arquivamento do log antigo foram removidos.
 
 | ID | Problema encontrado | Impacto | Correção | Teste |
 |---|---|---|---|---|
-| NC01 | Uma loja que respondesse `sucesso` sem os campos da oferta, ou com preço em texto, gerava `KeyError`/`TypeError` no agregador: a pesquisa inteira virava `erro_interno` e as outras 3 lojas eram descartadas | Contrariava RNF04, RF09 e o protocolo (resposta inválida = `erro_comunicacao`) | `agregador.validar_resposta_loja` confere tipos e campos obrigatórios; a resposta inválida vira `erro_comunicacao` só para aquela loja | CT17–CT19 |
+| NC01 | Uma loja que respondesse `sucesso` sem os campos da oferta, ou com preço em texto, gerava `KeyError`/`TypeError` no agregador: a pesquisa inteira virava `erro_interno` e as outras 3 lojas eram descartadas | Contrariava RNF04, o RF05 (lojas com falha informadas sem descartar as demais) e o protocolo (resposta inválida = `erro_comunicacao`) | `agregador.validar_resposta_loja` confere tipos e campos obrigatórios; a resposta inválida vira `erro_comunicacao` só para aquela loja | CT17–CT19 |
 | NC02 | `atraso_ms` aceitava `true`, `1.5` e `"50"` (convertidos com `int()`), embora o protocolo diga "inteiro" | Divergência entre protocolo e implementação | `protocolo.validar_atraso_ms`, usado pelo agregador e pelas lojas | CT20 |
 | NC03 | Com as portas já ocupadas (por exemplo, um `iniciar_servicos.py` esquecido aberto), um novo `iniciar_servicos.py` ou `experimentos.py` anunciava "Ambiente pronto": o `ping` era respondido pelos processos antigos | Demonstração e experimentos rodando sobre processos errados; no Exp. 5, derrubar a loja não teria efeito | `Ambiente` verifica se a porta está livre e se o próprio processo continua vivo; se a subida falha, encerra o que já tinha subido | CT28, CT29, CT35 |
 | NC04 | SIGTERM (`kill`) ou SIGHUP (fechar o terminal) no `iniciar_servicos.py` deixava as 4 lojas e o agregador órfãos, ocupando as portas; Ctrl+C no `experimentos.py` mostrava traceback | Próxima execução falhava (ver NC03) | `tratar_sinais_de_encerramento()` converte SIGTERM/SIGHUP em Ctrl+C nos dois scripts; `experimentos.py` trata a interrupção. Na verificação final, o CT36 revelou uma condição de corrida: um sinal recebido enquanto um serviço ainda subia deixava esse processo órfão (o agregador, em 5 de 6 tentativas). O `Ambiente` passou a registrar cada processo no instante em que o cria (0 de 6 depois da correção) | CT36 |
 | NC05 | RF08 diz que o tempo total **e o tempo por loja** são gravados em `log_pesquisas.csv`, mas o CSV só tinha o tempo total | Divergência entre requisito e implementação | Nova coluna `tempos_lojas_ms` no CSV e campo `tempos_lojas_ms` na resposta. (Na versão 1.1, um log com colunas antigas era renomeado; com o formato estável, isso saiu na 1.2.) | CT22 |
-| NC07 | Em 15/11/2026: o roteiro da demonstração (slide 12 do deck e seção 3.5) não seguia os experimentos da seção 9 do enunciado. O Exp. 4 não tinha comando de terminal, e o passo "derrubar uma loja (Ctrl+C)" encerrava **todo** o `iniciar_servicos.py`, não uma loja; desativar uma loja durante a pesquisa exigia 6 terminais | A demonstração não mostrava os 5 experimentos pedidos | `cliente.py --clientes N` (Exp. 4) e console no `iniciar_servicos.py` (`derrubar`/`subir`/`status`) para o Exp. 5; roteiro da seção 3.5, slide 12 e README reescritos um passo por experimento. Os testes novos falharam antes do código (`ImportError: executar_comando`; `--clientes` desconhecido) | CT68–CT71 |
+| NC09 | Em 15/11/2026: o documento tinha 13 RF e 8 RNF; os extras (RF09–RF13, RNF06–RNF08) não correspondiam aos exemplos das seções 5.2 e 5.3 do enunciado | A lista de requisitos não seguia fielmente o enunciado | Requisitos reduzidos a RF01–RF08 e RNF01–RNF05, um por exemplo do enunciado; o conteúdo dos removidos foi incorporado aos que ficaram (falhas e lojas sem o produto em RF05, catálogo em RF01, speedup em RF08, experimentos automatizados em RNF05, protocolo em RNF01, meta de desempenho em RNF02, Python e biblioteca padrão nas restrições) e a interface web passou a ser descrita como mais um cliente que atende os mesmos RF. Referências dos casos de teste, casos de uso, rastreabilidade, relatório, README e slide (agora com RF e RNF em tabela) atualizadas | V11, V12 |
+| NC08 | Em 15/11/2026, na conferência com a seção 5 do enunciado: (1) o RNF05 do enunciado ("permitir experimentos de desempenho") era o nosso RNF07, e o nosso RNF05 era a meta de desempenho; (2) o diagrama de casos de uso era um fluxograma, sem a notação UML (atores como caixas, «include» com seta cheia); (3) o slide de requisitos dizia "12 requisitos funcionais", sem o RF13; (4) os slides não mostravam escopo, atores, restrições e critérios de aceitação; (5) o relatório citava RF01–RF12, CA01–CA15 e casos de uso sem o UC05; (6) a fonte Mermaid embutida no `02` não tinha o UC05; (7) a rastreabilidade não cobria RNF05, RNF07 e RNF08 | Documento, relatório e slides não seguiam fielmente a seção 5 | RNF05 ↔ RNF07 trocados (e CT11, CT12 e UC04 ajustados); diagrama redesenhado em UML (`diagramas/casos_de_uso.svg` → `img/casos_de_uso.png`); slide de requisitos com 13 RF e novo slide "Análise de requisitos"; relatório §2–§3, `02` §1 e §3 e `01` §10 atualizados | V12, V13 |
+| NC07 | Em 15/11/2026: o roteiro da demonstração (slide do roteiro no deck e seção 3.5) não seguia os experimentos da seção 9 do enunciado. O Exp. 4 não tinha comando de terminal, e o passo "derrubar uma loja (Ctrl+C)" encerrava **todo** o `iniciar_servicos.py`, não uma loja; desativar uma loja durante a pesquisa exigia 6 terminais | A demonstração não mostrava os 5 experimentos pedidos | `cliente.py --clientes N` (Exp. 4) e console no `iniciar_servicos.py` (`derrubar`/`subir`/`status`) para o Exp. 5; roteiro da seção 3.5, slide do roteiro e README reescritos um passo por experimento. Os testes novos falharam antes do código (`ImportError: executar_comando`; `--clientes` desconhecido) | CT68–CT71 |
 | NC06 | Em 15/11/2026: no modo comparar (padrão da CLI), `cliente.py` fazia as duas pesquisas mas só imprimia o relatório do concorrente; o sequencial aparecia apenas como um tempo no comparativo | Na demonstração não dava para ver a tabela do modo sequencial | `cliente.executar` imprime o relatório de cada modo (sequencial e depois concorrente) antes do comparativo. O teste novo falhou antes da correção (`'MODO: SEQUENCIAL' not found`) | CT31, CT67 |
 
 ### Pendências do grupo
@@ -308,5 +310,6 @@ arquivamento do log antigo foram removidos.
 | PEND02 | Os números do relatório vinham da bateria anterior às correções | **Resolvida em 14/11/2026:** bateria completa rodada na versão final; relatório, `resultados/`, `.docx` e slides atualizados |
 | PEND03 | `img/arquitetura.png` e `img/casos_de_uso.png` mostravam a versão sem gateway/interface | **Resolvida em 14/11/2026:** renderizados de novo com `mermaid-cli` a partir de `diagramas/*.mmd`, `.docx` regerados e as imagens dos slides 5 (casos de uso, agora cinco) e 6 (arquitetura) trocadas no deck |
 | PEND04 | O deck ganhou o slide 12 (interface web), os diagramas novos nos slides 5 e 6 e o roteiro da demo em `backend/`, mas `docs/apresentacao.pptx` ainda era a exportação anterior (17 slides) | **Resolvida em 14/11/2026:** deck exportado de novo (PowerPoint, basic fonts) e `docs/apresentacao.pptx` substituído; conferidos 18 slides com os textos novos |
-| PEND05 | Em 15/11/2026, o slide 12 (roteiro da demonstração) passou a seguir os 5 experimentos (NC07), mas `docs/apresentacao.pptx` ainda é a exportação anterior | **Resolvida em 15/11/2026:** deck exportado de novo (PowerPoint, basic fonts) e `docs/apresentacao.pptx` substituído; conferidos 19 slides, o 12 com os 5 experimentos e as notas novas |
 | PEND05 | Deck redesenhado em 14/11/2026 (https://claude.ai/artifact/Lgii1Psd9TgHD3QbrMmJpz): visual escuro, 19 slides (agenda com tempos 2/4/4/5/3 min e divisão sugerida das falas entre os 5 integrantes nas notas), gráficos e arquitetura desenhados no próprio slide; todos os slides conferidos renderizados | **Resolvida em 14/11/2026:** deck novo exportado (PowerPoint, basic fonts) e `docs/apresentacao.pptx` substituído; conferidos 19 slides, 19 notas do apresentador, textos e números iguais aos do deck, e a capa renderizada com Arial/Courier New sem texto cortado |
+| PEND06 | Em 15/11/2026, o slide do roteiro da demonstração passou a seguir os 5 experimentos (NC07), mas `docs/apresentacao.pptx` ainda é a exportação anterior | **Resolvida em 15/11/2026:** deck exportado de novo (PowerPoint, basic fonts) e `docs/apresentacao.pptx` substituído; conferidos 19 slides, o 12 com os 5 experimentos e as notas novas |
+| PEND07 | Em 15/11/2026 (NC08), o deck ganhou o slide "Análise de requisitos" (20 slides), o slide de requisitos passou a mostrar os 8 RF e os 5 RNF em duas tabelas (NC09) e o de casos de uso usa o diagrama UML novo, mas `docs/apresentacao.pptx` ainda era a exportação anterior (19 slides) | **Resolvida em 15/11/2026:** deck exportado de novo (PowerPoint, basic fonts) e `docs/apresentacao.pptx` substituído; conferidos 20 slides: o 5 com a análise de requisitos, o 6 com as tabelas de RF01–RF08 e RNF01–RNF05, o 7 com o diagrama UML novo e o 13 com o roteiro pelos 5 experimentos; notas com 90 testes |

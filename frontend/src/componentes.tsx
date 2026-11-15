@@ -29,7 +29,7 @@ export function Alerta({ tipo = 'aviso', titulo, children }: { tipo?: TipoAlerta
   )
 }
 
-/** RF09: lojas sem o produto e lojas que falharam, com o motivo, sem esconder o resultado das demais. */
+/** RF05/RNF04: lojas sem o produto e lojas que falharam, com o motivo, sem esconder o resultado das demais. */
 export function AlertasConsulta({ resposta }: { resposta: RespostaConsulta }) {
   const falhas = resposta.ocorrencias_ou_falhas
   return (

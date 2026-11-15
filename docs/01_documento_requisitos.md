@@ -4,7 +4,7 @@
 Faculdade de Sistemas de Informação (FACSI) · Disciplina: Sistemas Distribuídos
 Professor: Gleison de Oliveira Medeiros · Trabalho 1 — Tema 6
 **Grupo VI:** Youri, José Miguel, Mateus Leitão, Michelangelo e Ângelo
-Versão 1.1 — novembro de 2026 (inclui a interface web: RF13, UC05, CA16–CA18)
+Versão 1.3 — novembro de 2026 (1.1: interface web, UC05, CA16–CA18; 1.2: roteiro da demonstração pelos 5 experimentos; 1.3: requisitos reduzidos aos 8 RF e 5 RNF dos exemplos do enunciado)
 
 ---
 
@@ -53,38 +53,36 @@ O **agregador** é um componente interno do sistema, não um ator. Ele intermedi
 
 ## 5. Requisitos funcionais
 
+Os oito requisitos funcionais seguem os exemplos da seção 5.2 do enunciado, adaptados ao tema.
+
 | ID | Requisito | Prioridade |
 |---|---|---|
-| **RF01** | O sistema deverá permitir que o usuário informe o produto a pesquisar, o modo de consulta (sequencial, concorrente ou comparação dos dois) e o critério de ordenação. | Essencial |
-| **RF02** | O sistema deverá consultar pelo menos quatro lojas independentes, cada uma executando como processo servidor próprio. | Essencial |
+| **RF01** | O sistema deverá permitir que o usuário informe os parâmetros de uma pesquisa: o produto (com a lista dos produtos disponíveis no catálogo das lojas), o modo de consulta (sequencial, concorrente ou comparação dos dois) e o critério de ordenação. | Essencial |
+| **RF02** | O sistema deverá consultar diferentes serviços independentes: pelo menos quatro lojas, cada uma executando como processo servidor próprio. | Essencial |
 | **RF03** | O sistema deverá permitir consultas **sequenciais**, em que uma loja é consultada após a resposta da anterior. | Essencial |
 | **RF04** | O sistema deverá permitir consultas **concorrentes**, em que todas as lojas são consultadas simultaneamente por threads. | Essencial |
-| **RF05** | O sistema deverá apresentar, para cada loja, o produto, as especificações técnicas, o preço, o frete, o preço total, a avaliação, a garantia e o tempo de resposta. | Essencial |
-| **RF06** | O sistema deverá ordenar as ofertas pelo preço total (preço + frete) ou pelo índice de custo-benefício, conforme escolha do usuário. | Essencial |
-| **RF07** | O sistema deverá identificar a **loja com menor preço total** e a **oferta de melhor custo-benefício**. | Essencial |
-| **RF08** | O sistema deverá medir e registrar o tempo de execução de cada pesquisa (tempo total e tempo por loja), gravando-o em `resultados/log_pesquisas.csv` (colunas `tempo_total_ms` e `tempos_lojas_ms`). | Essencial |
-| **RF09** | O sistema deverá informar as lojas que não possuem o produto e as lojas que falharam, indicando o motivo (fora do ar, queda, timeout), sem deixar de apresentar os resultados das demais. | Essencial |
-| **RF10** | O sistema deverá permitir listar os produtos disponíveis nos catálogos das lojas. | Desejável |
-| **RF11** | O sistema deverá exibir o comparativo de tempo entre os modos sequencial e concorrente, com o speedup obtido. | Essencial |
-| **RF12** | O sistema deverá oferecer a execução automatizada dos cinco experimentos obrigatórios, gerando tabelas (CSV/Markdown) e gráficos. | Essencial |
-| **RF13** | O sistema deverá oferecer uma interface web que permita pesquisar e comparar os modos (RF01–RF11), ver o status de cada loja e derrubá-la ou subi-la para demonstrar falhas, disparar até 50 clientes simultâneos e consultar os resultados dos experimentos e o registro de pesquisas. O navegador fala HTTP com um gateway local, que repassa cada operação ao agregador por socket TCP. | Desejável |
+| **RF05** | O sistema deverá apresentar os resultados encontrados: para cada loja, o produto, as especificações técnicas, o preço, o frete, o preço total, a avaliação, a garantia e o tempo de resposta, além das lojas sem o produto e das que falharam, com o motivo (fora do ar, queda, timeout), sem deixar de apresentar as demais. | Essencial |
+| **RF06** | O sistema deverá ordenar os resultados conforme um critério definido: preço total (preço + frete) ou índice de custo-benefício, à escolha do usuário. | Essencial |
+| **RF07** | O sistema deverá identificar a melhor opção segundo o critério escolhido: a **loja com menor preço total** e a **oferta de melhor custo-benefício**. | Essencial |
+| **RF08** | O sistema deverá registrar o tempo de execução das consultas (tempo total e tempo por loja) em `resultados/log_pesquisas.csv` (colunas `tempo_total_ms` e `tempos_lojas_ms`) e exibir o comparativo entre os modos sequencial e concorrente, com o speedup obtido. | Essencial |
+
+As duas interfaces do usuário (o `cliente.py` de linha de comando e a interface web, que usa um gateway HTTP como cliente TCP do agregador) atendem esses mesmos requisitos.
 
 ## 6. Requisitos não funcionais
 
+Os cinco requisitos não funcionais seguem os exemplos da seção 5.3 do enunciado.
+
 | ID | Categoria | Requisito |
 |---|---|---|
-| **RNF01** | Comunicação | Toda comunicação entre cliente, agregador e lojas deverá usar **sockets TCP** reais. |
-| **RNF02** | Concorrência | A estratégia concorrente deverá usar **threads** (`threading`), uma por loja consultada. |
-| **RNF03** | Escalabilidade | O agregador e as lojas deverão atender **múltiplas conexões simultâneas** (uma thread por conexão). Pelo menos 50 clientes simultâneos devem ser atendidos sem falhas. |
+| **RNF01** | Comunicação | A comunicação entre os componentes (cliente, agregador e lojas) deverá utilizar **sockets TCP** reais, com o protocolo de aplicação documentado em `docs/03_protocolo.md` (JSON UTF-8 terminado por `\n`, uma requisição por conexão, limite de 64 KB). |
+| **RNF02** | Concorrência | A estratégia concorrente deverá utilizar **threads** (`threading`), uma por loja consultada, de modo que o tempo total fique próximo da maior latência entre as lojas (sobrecarga inferior a 50 ms em ambiente local). |
+| **RNF03** | Escalabilidade | O servidor deverá atender **múltiplas conexões simultaneamente**: o agregador e as lojas usam uma thread por conexão e devem atender pelo menos 50 clientes simultâneos sem falhas. |
 | **RNF04** | Confiabilidade | O sistema deverá tratar falhas de comunicação (conexão recusada, queda durante a consulta, timeout de 2,5 s por loja, mensagens malformadas) sem encerrar o agregador e sem exibir *traceback* ao usuário. |
-| **RNF05** | Desempenho | No modo concorrente, o tempo total de uma pesquisa deverá ficar próximo da maior latência entre as lojas, com sobrecarga inferior a 50 ms em ambiente local. |
-| **RNF06** | Interoperabilidade | As mensagens deverão seguir o protocolo documentado (`docs/03_protocolo.md`): JSON UTF-8 terminado por `\n`, uma requisição por conexão, limite de 64 KB. |
-| **RNF07** | Experimentação | A latência das lojas deverá ser configurável (por loja ou por requisição) para permitir experimentos de desempenho reprodutíveis. |
-| **RNF08** | Portabilidade / manutenção | O sistema deverá executar em Python 3.10+ usando apenas a biblioteca padrão (matplotlib somente para os gráficos), com configuração centralizada em `config.py`. |
+| **RNF05** | Experimentação | A aplicação deverá permitir experimentos de desempenho: latência das lojas configurável (por loja ou por requisição), execução automatizada dos cinco experimentos com tabelas e gráficos e resultados reprodutíveis. |
 
 ## 7. Restrições
 
-- Linguagem **Python 3** e biblioteca padrão (`socket`, `threading`, `json`).
+- Linguagem **Python 3.10+** e apenas a biblioteca padrão (`socket`, `threading`, `json`); `matplotlib` só para os gráficos. Configuração centralizada em `config.py`.
 - Comunicação obrigatoriamente por **sockets TCP**. Não é permitido simular a comunicação.
 - Pelo menos **quatro** serviços independentes, cada um em processo separado e em porta TCP distinta (9001–9004). O agregador usa a porta 8000.
 - Dados de produtos e preços **simulados**, armazenados em `backend/dados/lojas/*.json`.
@@ -96,7 +94,7 @@ O **agregador** é um componente interno do sistema, não um ator. Ele intermedi
 O diagrama UML está em `02_modelagem.md`.
 
 ### UC01 — Pesquisar produto
-- **Ator:** Usuário comprador · **Requisitos:** RF01, RF02, RF05–RF09
+- **Ator:** Usuário comprador · **Requisitos:** RF01–RF08, RNF01–RNF04
 - **Pré-condição:** agregador e lojas em execução.
 - **Fluxo principal:**
   1. O usuário informa o produto, o modo e o critério.
@@ -112,19 +110,20 @@ O diagrama UML está em `02_modelagem.md`.
   - **A4:** parâmetro inválido → o agregador responde `erro_requisicao` e o cliente exibe o motivo.
 
 ### UC02 — Comparar estratégias sequencial × concorrente
-- **Ator:** Usuário comprador · **Requisitos:** RF03, RF04, RF11
+- **Ator:** Usuário comprador · **Requisitos:** RF03, RF04, RF08
 - **Fluxo:** o usuário escolhe o modo "comparar". O cliente executa o UC01 nos dois modos e exibe o relatório de cada um, os dois tempos e o speedup.
 
 ### UC03 — Listar catálogo
-- **Ator:** Usuário comprador · **Requisito:** RF10
+- **Ator:** Usuário comprador · **Requisito:** RF01
 - **Fluxo:** o cliente envia `listar_produtos`. O agregador consulta as lojas concorrentemente e devolve a união das palavras-chave.
 
 ### UC04 — Executar experimentos
-- **Ator:** Pesquisador · **Requisitos:** RF08, RF12, RNF07
+- **Ator:** Pesquisador · **Requisitos:** RF08, RNF03, RNF05
 - **Fluxo:** `experimentos.py` sobe as lojas e o agregador como processos, executa os experimentos 1 a 5 com repetições e grava os CSVs e `tabelas.md`. Em seguida, `graficos.py` gera os gráficos.
+- **Fluxo alternativo (ao vivo, na apresentação):** com `iniciar_servicos.py` no ar, o pesquisador executa cada experimento pelo `cliente.py`: `--modo sequencial` (Exp. 1), `--modo concorrente` (Exp. 2), `--atraso MS` (Exp. 3), `--clientes N` (Exp. 4) e, para o Exp. 5, digita `derrubar <loja>` no terminal do `iniciar_servicos.py` durante uma pesquisa e depois `subir <loja>`.
 
 ### UC05 — Usar a interface web
-- **Ator:** Usuário comprador ou avaliador · **Requisitos:** RF13 (e, através dela, RF01–RF12, RNF03, RNF04)
+- **Ator:** Usuário comprador ou avaliador · **Requisitos:** RF01–RF08, RNF03–RNF05 (a interface é mais um cliente do agregador)
 - **Pré-condição:** `backend/gateway_http.py` em execução (ele sobe as lojas e o agregador) e a interface aberta no navegador.
 - **Fluxo principal:** o usuário pesquisa na aba *Pesquisa*; o gateway envia `consultar` ao agregador por TCP (duas vezes no modo "comparar") e a interface mostra destaques, tempos por loja, speedup e a tabela de ofertas.
 - **Fluxos alternativos:**
@@ -163,16 +162,14 @@ Os módulos Python ficam em `backend/`; a interface web, em `frontend/`.
 
 | Requisito | Casos de uso | Módulos |
 |---|---|---|
-| RF01 | UC01, UC02 | `cliente.py` |
-| RF02 | UC01 | `loja_server.py`, `config.py` |
+| RF01 | UC01, UC02, UC03, UC05 | `cliente.py`, `agregador.py` (`listar_produtos`), `gateway_http.py` + `frontend/src/` |
+| RF02 | UC01 | `loja_server.py`, `config.py`, `iniciar_servicos.py` |
 | RF03, RF04 | UC01, UC02 | `agregador.py` (`consultar_todas`) |
-| RF05–RF07 | UC01 | `agregador.py` (`executar_busca`), `cliente.py` |
-| RF08 | UC01, UC04 | `agregador.py` (`RegistroPesquisas`) |
-| RF09 | UC01 | `agregador.py`, `cliente.py` |
-| RF10 | UC03 | `agregador.py` (`listar_produtos`) |
-| RF11 | UC02 | `cliente.py` (`comparar`) |
-| RF12 | UC04 | `experimentos.py`, `graficos.py` |
-| RNF01, RNF06 | todos | `protocolo.py` |
-| RNF02, RNF03 | UC01, UC04 | `servidor_base.py`, `agregador.py` |
-| RNF04 | UC01 | `protocolo.py`, `agregador.py`, `cliente.py` |
-| RF13 | UC05 | `backend/gateway_http.py`, `frontend/src/` |
+| RF05 | UC01, UC05 | `agregador.py` (`executar_busca`), `cliente.py`, `frontend/src/` |
+| RF06, RF07 | UC01 | `agregador.py` (`executar_busca`, `calcular_score_custo_beneficio`) |
+| RF08 | UC01, UC02, UC04 | `agregador.py` (`RegistroPesquisas`), `cliente.py` (`comparar`) |
+| RNF01 | todos | `protocolo.py`, `servidor_base.py` |
+| RNF02 | UC01, UC02 | `agregador.py` (uma thread por loja + `join()`) |
+| RNF03 | UC01, UC04 | `servidor_base.py`, `cliente.py` (`disparar_clientes_simultaneos`, `--clientes`) |
+| RNF04 | UC01 | `protocolo.py`, `agregador.py` (`validar_resposta_loja`), `cliente.py`, `iniciar_servicos.py` (`derrubar`/`subir`) |
+| RNF05 | UC04 | `loja_server.py` (latência), `protocolo.py` (`atraso_ms`), `iniciar_servicos.py` (`--latencias`), `experimentos.py`, `graficos.py` |

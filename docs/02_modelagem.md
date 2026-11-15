@@ -22,35 +22,11 @@ Os diagramas foram escritos em **Mermaid**: as fontes ficam em `diagramas/*.mmd`
 | Registrar tempo de execução | — | Incluído no UC01: grava o tempo em `log_pesquisas.csv` |
 | Tratar falha de loja | — | Estende o UC01 quando uma loja está fora do ar, cai ou estoura o timeout |
 
-<details><summary>Fonte Mermaid</summary>
+O diagrama segue a notação UML de casos de uso: atores (bonecos) fora da fronteira do sistema, casos de uso como elipses, associações em linha contínua e as relações «include» e «extend» em linha tracejada com seta aberta. O ator secundário *Serviço de loja* representa as quatro lojas.
 
-```mermaid
-flowchart LR
-    usuario(["👤 Usuário comprador<br/>«ator»"])
-    pesquisador(["👤 Pesquisador<br/>«ator»"])
-    loja(["🖥️ Serviço de loja<br/>«ator secundário»<br/>×4"])
-    subgraph sistema["Sistema Agregador de Preços de Eletrônicos"]
-        direction TB
-        uc1(["UC01 · Pesquisar produto"])
-        uc2(["UC02 · Comparar sequencial × concorrente"])
-        uc3(["UC03 · Listar catálogo"])
-        uc4(["UC04 · Executar experimentos"])
-        uc5(["Ordenar e identificar melhor oferta"])
-        uc6(["Registrar tempo de execução"])
-        uc7(["Tratar falha de loja"])
-    end
-    usuario --- uc1
-    usuario --- uc2
-    usuario --- uc3
-    pesquisador --- uc4
-    uc2 -. "«include»" .-> uc1
-    uc4 -. "«include»" .-> uc1
-    uc1 -. "«include»" .-> uc5
-    uc1 -. "«include»" .-> uc6
-    uc7 -. "«extend»" .-> uc1
-    uc1 --- loja
-    uc3 --- loja
-```
+<details><summary>Fonte</summary>
+
+Ver `diagramas/casos_de_uso.svg` (SVG; a imagem `img/casos_de_uso.png` é a renderização dele).
 </details>
 
 ## 2. Diagrama de arquitetura
@@ -103,32 +79,5 @@ No **modo sequencial**, o diagrama seria igual, mas sem o bloco `par`: as mensag
 
 <details><summary>Fonte Mermaid</summary>
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor U as Usuário
-    participant C as cliente.py
-    participant A as Agregador (:8000)
-    participant K as KabumSim (:9001)
-    participant P as PichauSim (:9002)
-    participant T as TerabyteSim (:9003)
-    participant M as MagaluTechSim (:9004)
-    U->>C: produto="rtx 4060", modo=concorrente, critério=preço
-    C->>+A: connect() + {"operacao":"consultar",...}\n
-    par Thread 1
-        A->>+K: consultar
-        K-->>-A: {"fonte":"KabumSim","preco_total":1899.9,"status":"sucesso"}
-    and Thread 2
-        A->>+P: consultar
-        P-->>-A: {"fonte":"PichauSim","preco_total":1864.0,"status":"sucesso"}
-    and Thread 3
-        A->>+T: consultar
-        T-->>-A: {"fonte":"TerabyteSim","preco_total":1887.9,"status":"sucesso"}
-    and Thread 4
-        A-xM: connect()  (ConnectionRefusedError)
-    end
-    Note over A: join() · ordena · registra tempo
-    A-->>-C: resposta consolidada + close()
-    C-->>U: relatório
-```
+Ver `diagramas/sequencia_pesquisa.mmd`.
 </details>

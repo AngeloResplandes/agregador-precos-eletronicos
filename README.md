@@ -50,10 +50,10 @@ Abra http://localhost:5173. As quatro abas cobrem os requisitos:
 
 | Aba | O que demonstra |
 |---|---|
-| Pesquisa | produto, modo (sequencial, concorrente ou comparar), critério e latência; menor preço, melhor custo-benefício, speedup, tempo de cada loja (soma × máximo) e tabela de ofertas (RF01–RF11) |
-| Lojas e falhas | status de cada loja por `ping`; botões para **derrubar e subir** uma loja e pesquisar de novo (3/4 lojas + motivo da falha) (RF02, RF09, RNF04) |
+| Pesquisa | produto, modo (sequencial, concorrente ou comparar), critério e latência; menor preço, melhor custo-benefício, speedup, tempo de cada loja (soma × máximo) e tabela de ofertas (RF01–RF08) |
+| Lojas e falhas | status de cada loja por `ping`; botões para **derrubar e subir** uma loja e pesquisar de novo (3/4 lojas + motivo da falha) (RF02, RF05, RNF04) |
 | Teste de carga | 1 a 50 clientes TCP simultâneos: média, p95, vazão e falhas (RNF03, RNF05) |
-| Experimentos e log | tabelas dos CSVs, gráficos g1–g6 e as últimas linhas de `log_pesquisas.csv` (RF08, RF12) |
+| Experimentos e log | tabelas dos CSVs, gráficos g1–g6 e as últimas linhas de `log_pesquisas.csv` (RF08, RNF05) |
 
 Se o ambiente já estiver rodando por `iniciar_servicos.py` (ou pelos 6 terminais da demo manual), use `python3 backend/gateway_http.py --externo`: o gateway só se conecta a ele, sem controlar os processos.
 
@@ -229,5 +229,5 @@ agregador_precos_eletronicos/
 - `04_relatorio_tecnico.md` / `.docx`: relatório técnico.
 - `05_plano_verificacao_testes.md` / `.docx`: conferência item a item com o enunciado, plano de testes, resultados e correções.
 - `gerar_docx.py`: regenera os .docx a partir dos .md (`../backend/.venv/bin/python gerar_docx.py`).
-- Slides: o deck da apresentação está no Claude Design (https://claude.ai/artifact/Lgii1Psd9TgHD3QbrMmJpz), com visual escuro "rede/terminal" e 19 slides nas 5 partes do enunciado (agenda com tempos e divisão sugerida das falas nas notas; o 13 mostra a interface web). `apresentacao.pptx` é a exportação dele para PowerPoint (basic fonts): depois de editar o deck, exporte de novo (botão de download › PowerPoint) e substitua este arquivo. O deck anterior, de fundo claro, continua em https://claude.ai/artifact/E8msabfUmYRJvqqFxBS1U8 como reserva.
+- Slides: o deck da apresentação está no Claude Design (https://claude.ai/artifact/Lgii1Psd9TgHD3QbrMmJpz), com visual escuro "rede/terminal" e 20 slides nas 5 partes do enunciado (agenda com tempos e divisão sugerida das falas nas notas; a parte 2 traz análise de requisitos, os 13 RF e 8 RNF e os três diagramas UML/arquitetura/sequência; o 13 é o roteiro da demonstração pelos 5 experimentos e o 14 a interface web). `apresentacao.pptx` é a exportação dele para PowerPoint (basic fonts): depois de editar o deck, exporte de novo (botão de download › PowerPoint) e substitua este arquivo. O deck anterior, de fundo claro, continua em https://claude.ai/artifact/E8msabfUmYRJvqqFxBS1U8 como reserva.
 - Design da interface web: canvas no Claude Design (https://claude.ai/artifact/TyEFDuFHtMT7KWniR6aKeY), com a mesma paleta dos slides.
