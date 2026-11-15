@@ -862,3 +862,8 @@ timestamp,cliente,operacao,produto,modo,criterio,atraso_ms,tempo_total_ms,tempos
 2026-11-15T11:33:51.360,127.0.0.1:58153,consultar,iphone,concorrente,preco,,157.14,KabumSim=156.69;PichauSim=156.95;TerabyteSim=156.84;MagaluTechSim=156.7,4,4,0,1,sucesso
 2026-11-15T11:35:44.068,127.0.0.1:58159,consultar,ssd,sequencial,custo_beneficio,,618.62,KabumSim=155.89;PichauSim=152.6;TerabyteSim=155.78;MagaluTechSim=154.31,4,4,0,1,sucesso
 2026-11-15T11:35:44.228,127.0.0.1:58164,consultar,ssd,concorrente,custo_beneficio,,155.76,KabumSim=155.59;PichauSim=155.43;TerabyteSim=155.28;MagaluTechSim=155.38,4,4,0,1,sucesso
+2026-11-15T11:43:22.231,127.0.0.1:58959,consultar,rtx 4060,sequencial,preco,,620.65,KabumSim=158.69;PichauSim=155.82;TerabyteSim=153.74;MagaluTechSim=152.35,4,4,0,1,sucesso
+2026-11-15T11:43:22.391,127.0.0.1:58965,consultar,rtx 4060,concorrente,preco,,155.85,KabumSim=155.49;PichauSim=155.12;TerabyteSim=155.52;MagaluTechSim=153.24,4,4,0,1,sucesso
+2026-11-15T11:44:26.025,127.0.0.1:58974,consultar,ssd,sequencial,custo_beneficio,,617.32,KabumSim=155.94;PichauSim=151.7;TerabyteSim=153.27;MagaluTechSim=156.36,4,4,0,1,sucesso
+2026-11-15T11:44:26.185,127.0.0.1:58979,consultar,ssd,concorrente,custo_beneficio,,156.22,KabumSim=153.41;PichauSim=153.26;TerabyteSim=155.95;MagaluTechSim=152.12,4,4,0,1,sucesso
+2026-11-15T11:47:34.969,127.0.0.1:58992,consultar,ssd,concorrente,preco,,157.0,KabumSim=156.86;PichauSim=156.6;TerabyteSim=156.7;MagaluTechSim=156.66,4,4,0,1,sucesso

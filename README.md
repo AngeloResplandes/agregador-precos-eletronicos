@@ -79,7 +79,30 @@ Para latências diferentes por loja (útil para mostrar soma × máximo):
 python3 iniciar_servicos.py --latencias 100,200,300,400
 ```
 
-**Terminal 2**: cliente:
+Com o ambiente no ar, esse terminal aceita comandos para derrubar e subir uma loja sem parar as outras:
+
+| Comando | Efeito |
+|---|---|
+| `derrubar <loja>` | encerra o processo da loja (ex.: `derrubar MagaluTechSim`) |
+| `subir <loja>` | sobe a loja de novo, com a latência original |
+| `status` | mostra quais lojas estão no ar |
+| `ajuda` | lista os comandos |
+
+**Terminal 2**: cliente.
+
+### Roteiro da apresentação: os 5 experimentos do enunciado
+
+| Exp. | Comando (terminal 2) | O que mostra |
+|---|---|---|
+| 1. Consulta sequencial | `python3 cliente.py rtx 4060 --modo sequencial` | uma loja após a outra; tempo total ≈ soma (≈ 600 ms) |
+| 2. Consulta concorrente | `python3 cliente.py rtx 4060 --modo concorrente` | uma thread por loja; tempo total ≈ maior latência (≈ 150 ms) |
+| 3. Simulação de latência | `python3 cliente.py rtx 4060 --atraso 500` | atraso artificial nas lojas, os dois modos e o speedup (≈ 2.000 × ≈ 500 ms) |
+| 4. Múltiplos clientes | `python3 cliente.py rtx 4060 --clientes 20` | 20 clientes simultâneos em cada modo: tempos, vazão e falhas (0/20) |
+| 5. Indisponibilidade | `python3 cliente.py ssd --modo sequencial --atraso 2000` e, durante a pesquisa, `derrubar MagaluTechSim` no terminal 1 | a pesquisa conclui com 3/4 lojas e `[ALERTA] MagaluTechSim: erro_comunicacao`; `subir MagaluTechSim` e repetir → 4/4 |
+
+Cada pesquisa também é registrada em `backend/resultados/log_pesquisas.csv` (tempo total e tempo de cada loja).
+
+Outros exemplos:
 
 ```bash
 python3 cliente.py
@@ -102,6 +125,7 @@ python3 cliente.py --listar
 | `--modo` | `comparar` (roda os dois e mostra o speedup), `sequencial`, `concorrente` | `comparar` |
 | `--criterio` | `preco` (preço + frete), `custo_beneficio` | `preco` |
 | `--atraso` | latência artificial em ms aplicada a todas as lojas | a de cada loja (150) |
+| `--clientes` | dispara N clientes simultâneos (1 a 50), um lote por modo | — (um cliente) |
 | `--host`, `--porta` | endereço do agregador | `127.0.0.1`, `8000` |
 
 Produtos do catálogo: `rtx 4060`, `notebook`, `monitor`, `ssd`, `iphone`.
@@ -134,7 +158,7 @@ python3 agregador.py
 python3 cliente.py
 ```
 
-Para demonstrar a **falha de serviço**, pressione Ctrl+C no terminal de uma loja e repita a pesquisa. O cliente mostra 3/4 lojas e um `[ALERTA]` com o motivo. Ao subir a loja de novo, ela volta a responder.
+Para demonstrar a **falha de serviço** nessa variante, pressione Ctrl+C no terminal de uma loja e repita a pesquisa (com `iniciar_servicos.py`, use `derrubar <loja>`: Ctrl+C ali encerra tudo). O cliente mostra 3/4 lojas e um `[ALERTA]` com o motivo. Ao subir a loja de novo, ela volta a responder.
 
 ## Experimentos (seção 9 do enunciado)
 
@@ -168,7 +192,7 @@ python3 experimentos.py
 cd backend && python3 -m unittest discover -s tests -v
 ```
 
-São 83 testes: protocolo, ordenação, desempenho, falhas (loja desligada, queda, timeout, resposta inválida), validação, registro em CSV, múltiplos clientes, serviço de loja, gerenciamento de processos, o roteiro da demonstração com processos reais (`tests/test_sistema.py`, pulado se as portas 8000/9001–9004 estiverem ocupadas) e o gateway HTTP da interface (`tests/test_gateway.py`). O plano de verificação e testes está em `docs/05_plano_verificacao_testes.md`.
+São 90 testes: protocolo, ordenação, desempenho, falhas (loja desligada, queda, timeout, resposta inválida), validação, registro em CSV, múltiplos clientes, serviço de loja, gerenciamento de processos, o roteiro da demonstração com processos reais (`tests/test_sistema.py`, pulado se as portas 8000/9001–9004 estiverem ocupadas) e o gateway HTTP da interface (`tests/test_gateway.py`). O plano de verificação e testes está em `docs/05_plano_verificacao_testes.md`.
 
 Na interface, `npm run build` (em `frontend/`) também confere os tipos TypeScript e `npx oxlint src` aponta problemas de código.
 

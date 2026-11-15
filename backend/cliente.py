@@ -8,14 +8,16 @@ Uso:
     python cliente.py notebook                         # compara sequencial x concorrente
     python cliente.py rtx 4060 --modo concorrente --criterio custo_beneficio
     python cliente.py --listar                         # catálogo disponível
+    python cliente.py rtx 4060 --clientes 20           # 20 clientes simultâneos (Exp. 4)
 """
 import argparse
+import statistics
 import sys
 import threading
 import time
 
 import protocolo
-from config import HOST, PORTA_AGREGADOR, TIMEOUT_CLIENTE
+from config import HOST, MAX_CLIENTES_CARGA, PORTA_AGREGADOR, TIMEOUT_CLIENTE
 
 LARGURA = 100
 
@@ -155,6 +157,36 @@ def executar(produto: str, modo: str, criterio: str, atraso_ms=None, **conexao) 
         print("=" * LARGURA)
 
 
+def exibir_carga(n: int, produto: str, modo: str, criterio: str, atraso_ms=None, **conexao) -> None:
+    """N clientes simultâneos fazem a mesma pesquisa; em 'comparar', um lote em cada modo."""
+    modos = protocolo.MODOS_VALIDOS if modo == protocolo.MODO_COMPARAR else (modo,)
+    print("\n" + "=" * LARGURA)
+    print(f" {n} CLIENTES SIMULTÂNEOS | PESQUISA: '{produto.upper()}' | ORDENAÇÃO: {criterio.upper()}")
+    for m in modos:
+        r = disparar_clientes_simultaneos(n, produto, m, criterio, atraso_ms, **conexao)
+        tempos, lote = r["tempos_ms"], r["tempo_total_ms"]
+        falhas = [f for f in r["falhas"] if f is not None]
+        print("-" * LARGURA)
+        print(f" MODO: {m.upper()} | Tempo do lote: {lote:.2f} ms | Vazão: {n / (lote / 1000.0):.2f} req/s")
+        print(f"    * Tempo por cliente: média {statistics.mean(tempos):.2f} ms | "
+              f"mín {min(tempos):.2f} ms | máx {max(tempos):.2f} ms")
+        print(f"    * Falhas: {len(falhas)}/{n}")
+        for motivo in sorted(set(falhas)):
+            print(f" [ALERTA] {falhas.count(motivo)} cliente(s): {motivo}")
+    print("=" * LARGURA)
+
+
+def _numero_de_clientes(texto: str) -> int:
+    """type= do argparse para --clientes: inteiro de 1 a MAX_CLIENTES_CARGA."""
+    try:
+        n = int(texto)
+    except ValueError:
+        raise argparse.ArgumentTypeError("informe um número inteiro") from None
+    if not 1 <= n <= MAX_CLIENTES_CARGA:
+        raise argparse.ArgumentTypeError(f"use de 1 a {MAX_CLIENTES_CARGA} clientes")
+    return n
+
+
 def exibir_catalogo(**conexao) -> None:
     resp = listar_produtos(**conexao)
     print("Catálogo disponível: " + " | ".join(resp.get("produtos", [])))
@@ -200,15 +232,21 @@ def main(argv=None) -> int:
                         choices=[protocolo.MODO_COMPARAR, *protocolo.MODOS_VALIDOS])
     parser.add_argument("--criterio", default=protocolo.CRITERIO_PRECO, choices=protocolo.CRITERIOS_VALIDOS)
     parser.add_argument("--atraso", type=int, default=None, help="latência artificial por loja em ms")
+    parser.add_argument("--clientes", type=_numero_de_clientes, default=None,
+                        help=f"dispara N clientes simultâneos (1 a {MAX_CLIENTES_CARGA})")
     parser.add_argument("--listar", action="store_true", help="lista o catálogo e sai")
     parser.add_argument("--host", default=HOST)
     parser.add_argument("--porta", type=int, default=PORTA_AGREGADOR)
     args = parser.parse_args(argv)
+    if args.clientes and not args.produto:
+        parser.error("--clientes exige o produto (ex.: cliente.py rtx 4060 --clientes 20)")
     conexao = {"host": args.host, "porta": args.porta}
 
     try:
         if args.listar:
             exibir_catalogo(**conexao)
+        elif args.produto and args.clientes:
+            exibir_carga(args.clientes, " ".join(args.produto), args.modo, args.criterio, args.atraso, **conexao)
         elif args.produto:
             executar(" ".join(args.produto), args.modo, args.criterio, args.atraso, **conexao)
         else:

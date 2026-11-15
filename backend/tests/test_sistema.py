@@ -15,7 +15,7 @@ import unittest
 
 import apoio  # noqa: F401  (ajusta o sys.path)
 from config import DIRETORIO_BASE, HOST, LOJAS, PORTA_AGREGADOR
-from iniciar_servicos import Ambiente
+from iniciar_servicos import Ambiente, executar_comando
 
 PORTAS = [PORTA_AGREGADOR] + [loja["porta"] for loja in LOJAS]
 
@@ -110,6 +110,33 @@ class TestDemonstracao(unittest.TestCase):
         self.assertEqual(proc.returncode, 1)
         self.assertIn("em uso", saida)
         self.assertNotIn("Ambiente pronto", saida)
+
+    def test_7_exp4_multiplos_clientes(self):
+        codigo, saida = rodar("cliente.py", "rtx", "4060", "--clientes", "10")
+        self.assertEqual(codigo, 0)
+        self.assertIn("10 CLIENTES SIMULTÂNEOS", saida)
+        self.assertEqual(saida.count("Falhas: 0/10"), 2)  # sequencial e concorrente
+
+    def test_8_exp5_loja_derrubada_durante_a_pesquisa(self):
+        # sequencial com 1,5 s por loja: a MagaluTechSim (última) é derrubada enquanto a pesquisa anda
+        nome = LOJAS[-1]["nome"]
+        proc = subprocess.Popen([sys.executable, os.path.join(DIRETORIO_BASE, "cliente.py"), "ssd",
+                                 "--modo", "sequencial", "--atraso", "1500"],
+                                cwd=DIRETORIO_BASE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        try:
+            time.sleep(2.0)
+            self.assertIn("[OK]", executar_comando(self.amb, f"derrubar {nome}"))
+            saida, _ = proc.communicate(timeout=20)
+        finally:
+            if proc.poll() is None:
+                proc.kill()
+            executar_comando(self.amb, f"subir {nome}")
+        self.assertEqual(proc.returncode, 0)
+        self.assertIn("Lojas que responderam: 3/4", saida)
+        self.assertIn(f"[ALERTA] {nome}: erro_comunicacao", saida)
+        self.assertNotIn("Traceback", saida)
+        codigo, saida = rodar("cliente.py", "ssd", "--modo", "concorrente")
+        self.assertIn("Lojas que responderam: 4/4", saida)
 
 
 @unittest.skipUnless(portas_livres(), "portas 8000/9001-9004 ocupadas")

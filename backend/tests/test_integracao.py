@@ -8,6 +8,7 @@ import unittest
 
 import apoio
 import protocolo
+import cliente
 from cliente import (ErroCliente, comparar, disparar_clientes_simultaneos, executar, listar_produtos,
                      requisitar_agregador)
 from servidor_base import ServidorTCPMultithread
@@ -73,6 +74,35 @@ class TestPontaAPonta(unittest.TestCase):
         self.assertEqual(len(r["tempos_ms"]), 10)
         self.assertEqual(r["falhas"], [None] * 10)
         self.assertGreater(r["tempo_total_ms"], 0)
+
+    def test_cli_multiplos_clientes(self):
+        # Exp. 4 ao vivo: python3 cliente.py rtx 4060 --clientes N
+        saida = io.StringIO()
+        with contextlib.redirect_stdout(saida):
+            codigo = cliente.main(["rtx", "4060", "--clientes", "5", "--modo", "concorrente",
+                                   "--host", apoio.HOST, "--porta", str(self.amb.porta_agregador)])
+        texto = saida.getvalue()
+        self.assertEqual(codigo, 0)
+        self.assertIn("5 CLIENTES SIMULTÂNEOS", texto)
+        self.assertIn("MODO: CONCORRENTE", texto)
+        self.assertNotIn("MODO: SEQUENCIAL", texto)
+        self.assertIn("Falhas: 0/5", texto)
+
+    def test_cli_multiplos_clientes_compara_os_dois_modos(self):
+        saida = io.StringIO()
+        with contextlib.redirect_stdout(saida):
+            codigo = cliente.main(["ssd", "--clientes", "3", "--atraso", "10",
+                                   "--host", apoio.HOST, "--porta", str(self.amb.porta_agregador)])
+        texto = saida.getvalue()
+        self.assertEqual(codigo, 0)
+        self.assertLess(texto.index("MODO: SEQUENCIAL"), texto.index("MODO: CONCORRENTE"))
+        self.assertEqual(texto.count("Falhas: 0/3"), 2)
+
+    def test_cli_clientes_fora_do_limite(self):
+        for valor in ("0", "51", "abc"):
+            with self.subTest(valor=valor), contextlib.redirect_stderr(io.StringIO()), \
+                    self.assertRaises(SystemExit):
+                cliente.main(["ssd", "--clientes", valor])
 
     def test_json_malformado_recebe_erro(self):
         with socket.create_connection((apoio.HOST, self.amb.porta_agregador), timeout=5) as s:

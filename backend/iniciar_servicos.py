@@ -6,6 +6,11 @@ Módulo: iniciar_servicos.py (Sobe as 4 lojas e o agregador como processos indep
 Uso (demonstração):
     python iniciar_servicos.py [--latencias 100,200,300,400]
 Depois, em outro terminal: python cliente.py   (Ctrl+C encerra todos os processos)
+
+Com o ambiente no ar, este terminal aceita comandos (Exp. 5 - indisponibilidade de serviço):
+    derrubar <loja>   encerra o processo da loja (ex.: derrubar MagaluTechSim)
+    subir <loja>      sobe a loja de novo, com a latência original
+    status            mostra quais lojas estão no ar
 """
 import argparse
 import os
@@ -101,6 +106,10 @@ class Ambiente:
             raise
         return self
 
+    def loja_ativa(self, nome: str) -> bool:
+        processo = self.lojas.get(nome)
+        return processo is not None and processo.poll() is None
+
     def derrubar_loja(self, nome: str) -> None:
         processo = self.lojas.get(nome)
         if processo and processo.poll() is None:
@@ -124,6 +133,56 @@ class Ambiente:
         self.encerrar()
 
 
+AJUDA_CONSOLE = ("Comandos: derrubar <loja> | subir <loja> | status | ajuda   (Ctrl+C encerra tudo)")
+
+
+def executar_comando(ambiente: Ambiente, linha: str) -> str:
+    """Interpreta um comando do console do iniciar_servicos.py e devolve a mensagem para o terminal."""
+    partes = linha.split()
+    if not partes:
+        return ""
+    comando, argumentos = partes[0].lower(), partes[1:]
+    if comando == "ajuda":
+        return AJUDA_CONSOLE
+    if comando == "status":
+        return "\n".join(f"  {loja['nome']}: {'no ar' if ambiente.loja_ativa(loja['nome']) else 'fora do ar'} "
+                         f"(porta {loja['porta']})" for loja in ambiente.config_lojas)
+    if comando not in ("derrubar", "subir"):
+        return f"[!] comando desconhecido: '{comando}'. {AJUDA_CONSOLE}"
+    if len(argumentos) != 1:
+        return f"[!] uso: {comando} <loja>"
+    nomes = {loja["nome"].lower(): i for i, loja in enumerate(ambiente.config_lojas)}
+    indice = nomes.get(argumentos[0].lower())
+    if indice is None:
+        return f"[!] loja desconhecida: '{argumentos[0]}'. Lojas: {', '.join(l['nome'] for l in ambiente.config_lojas)}"
+    loja = ambiente.config_lojas[indice]
+    ativa = ambiente.loja_ativa(loja["nome"])
+    if comando == "derrubar":
+        if not ativa:
+            return f"[!] {loja['nome']} já está fora do ar"
+        ambiente.derrubar_loja(loja["nome"])
+        return f"[OK] {loja['nome']} derrubada (porta {loja['porta']} fechada)"
+    if ativa:
+        return f"[!] {loja['nome']} já está no ar"
+    try:
+        ambiente.subir_loja(loja, ambiente.latencias[indice])
+    except RuntimeError as exc:
+        return f"[!] não foi possível subir {loja['nome']}: {exc}"
+    return f"[OK] {loja['nome']} no ar de novo (porta {loja['porta']}, {ambiente.latencias[indice]} ms)"
+
+
+def console(ambiente: Ambiente) -> None:
+    """Lê comandos do terminal; sem entrada (stdin fechado, segundo plano) só mantém o ambiente no ar."""
+    try:
+        while True:
+            resposta = executar_comando(ambiente, input("> "))
+            if resposta:
+                print(resposta, flush=True)
+    except EOFError:
+        while True:
+            time.sleep(1)
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Sobe as 4 lojas e o agregador.")
     parser.add_argument("--latencias", type=ler_latencias, help="latências em ms (ex.: 100,200,300,400)")
@@ -135,9 +194,8 @@ def main(argv=None) -> int:
     try:
         ambiente.subir()
         print("\n[OK] Ambiente pronto. Em outro terminal execute: python cliente.py")
-        print("     Ctrl+C para encerrar.\n", flush=True)
-        while True:
-            time.sleep(1)
+        print(f"     {AJUDA_CONSOLE}\n", flush=True)
+        console(ambiente)
     except KeyboardInterrupt:
         print("\n[!] Encerrando ambiente...")
     except RuntimeError as exc:

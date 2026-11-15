@@ -79,12 +79,12 @@ O sistema distribuído fica em `backend/` e a interface web em `frontend/` (seç
 | `servidor_base.py` | `ServidorTCPMultithread`: `accept()` em laço, **uma thread por conexão**, timeout de ociosidade, respostas de erro padronizadas e proteção contra exceções no tratamento |
 | `loja_server.py` | Serviço de loja: carrega `dados/lojas/<loja>.json`, simula latência (`time.sleep`) e responde `consultar`, `listar_produtos` e `ping` |
 | `agregador.py` | Classe `Agregador`: valida requisições, consulta as lojas (sequencial ou concorrente), consolida, ordena, calcula o custo-benefício e registra o tempo em CSV |
-| `cliente.py` | CLI interativa ou por argumentos (`--modo`, `--criterio`, `--atraso`, `--listar`) com tratamento amigável de erros |
+| `cliente.py` | CLI interativa ou por argumentos (`--modo`, `--criterio`, `--atraso`, `--clientes`, `--listar`) com tratamento amigável de erros; `--clientes N` dispara N clientes simultâneos (Exp. 4 ao vivo) |
 | `config.py` | Endereços, portas, latências e timeouts centralizados |
-| `iniciar_servicos.py` | Sobe as 4 lojas e o agregador como processos e aguarda o `ping` de cada um |
+| `iniciar_servicos.py` | Sobe as 4 lojas e o agregador como processos e aguarda o `ping` de cada um; no terminal, aceita `derrubar <loja>`, `subir <loja>` e `status` (Exp. 5 ao vivo) |
 | `experimentos.py` / `graficos.py` | Bateria dos 5 experimentos e geração dos gráficos |
 | `gateway_http.py` | Ponte HTTP/JSON (porta 8080) para a interface web; é um cliente TCP do agregador (seção 4.7) |
-| `tests/` | 83 testes automatizados (`unittest`): unidade, integração e sistema |
+| `tests/` | 90 testes automatizados (`unittest`): unidade, integração e sistema |
 
 ### 4.2 Estratégias de consulta
 
@@ -138,7 +138,7 @@ O protocolo usa JSON UTF-8 terminado por `\n`, com uma requisição e uma respos
 
 ### 4.6 Testes
 
-Os 83 testes automatizados (`cd backend && python -m unittest discover -s tests`) se dividem em três níveis. Os testes de unidade e integração sobem lojas e agregador em threads, em portas efêmeras. Os testes de sistema (`tests/test_sistema.py`) sobem os processos reais nas portas 8000 e 9001–9004 e usam o `cliente.py` como na apresentação. Eles cobrem:
+Os 90 testes automatizados (`cd backend && python -m unittest discover -s tests`) se dividem em três níveis. Os testes de unidade e integração sobem lojas e agregador em threads, em portas efêmeras. Os testes de sistema (`tests/test_sistema.py`) sobem os processos reais nas portas 8000 e 9001–9004 e usam o `cliente.py` como na apresentação. Eles cobrem:
 - framing (fragmentação, JSON inválido, limite de tamanho, conexão encerrada, timeout);
 - ordenação e menor preço;
 - equivalência entre os modos sequencial e concorrente;
@@ -151,7 +151,7 @@ Os 83 testes automatizados (`cd backend && python -m unittest discover -s tests`
 - respostas inválidas de loja (campos ausentes ou de tipo errado);
 - serviço de loja isolado (busca, item mais barato, validação);
 - gerenciamento de processos (porta ocupada, limpeza, SIGTERM);
-- roteiro completo da demonstração com processos reais;
+- roteiro completo da demonstração com processos reais, um passo por experimento (inclusive N clientes pela CLI e uma loja derrubada pelo console durante a pesquisa);
 - gateway HTTP da interface web (pesquisa, comparação, validação, falhas, carga, derrubar/subir loja, arquivos servidos).
 
 Todos passam. O plano de verificação e testes completo, com a matriz de atendimento ao enunciado, está em `05_plano_verificacao_testes.md`.

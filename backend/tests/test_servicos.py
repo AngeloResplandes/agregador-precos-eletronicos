@@ -7,7 +7,7 @@ import unittest
 import apoio
 import protocolo
 
-from iniciar_servicos import Ambiente, ler_latencias
+from iniciar_servicos import Ambiente, executar_comando, ler_latencias
 from loja_server import Loja, carregar_catalogo
 from servidor_base import ServidorTCPMultithread
 
@@ -89,6 +89,32 @@ class TestAmbiente(unittest.TestCase):
                 protocolo.requisitar(HOST, porta, {"operacao": "ping"}, 2)
         finally:
             amb.encerrar()
+
+    def test_console_derruba_e_sobe_loja(self):
+        # Exp. 5 ao vivo: no terminal do iniciar_servicos.py, "derrubar <loja>" e "subir <loja>"
+        porta = apoio.porta_livre()
+        amb = Ambiente(lojas=[self._loja(porta, "MagaluTechSim")], latencias=[0], saida=subprocess.DEVNULL)
+        try:
+            amb.subir(com_agregador=False)
+            self.assertIn("MagaluTechSim: no ar", executar_comando(amb, "status"))
+            self.assertIn("[OK]", executar_comando(amb, "derrubar magalutechsim"))
+            with self.assertRaises(ConnectionRefusedError):
+                protocolo.requisitar(HOST, porta, {"operacao": "ping"}, 2)
+            self.assertIn("MagaluTechSim: fora do ar", executar_comando(amb, "status"))
+            self.assertIn("[!]", executar_comando(amb, "derrubar MagaluTechSim"))  # já está fora
+            self.assertIn("[OK]", executar_comando(amb, "subir MagaluTechSim"))
+            self.assertTrue(protocolo.ping(HOST, porta))
+            self.assertIn("[!]", executar_comando(amb, "subir MagaluTechSim"))  # já está no ar
+        finally:
+            amb.encerrar()
+
+    def test_console_comandos_invalidos(self):
+        amb = Ambiente(lojas=[self._loja(apoio.porta_livre())], latencias=[0], saida=subprocess.DEVNULL)
+        for linha in ("derrubar LojaQueNaoExiste", "derrubar", "apagar tudo", "subir"):
+            with self.subTest(linha=linha):
+                self.assertIn("[!]", executar_comando(amb, linha))
+        self.assertIn("derrubar", executar_comando(amb, "ajuda"))
+        self.assertEqual(executar_comando(amb, "   "), "")
 
     def test_porta_ocupada_e_detectada(self):
         # outro serviço já responde 'ping' na porta: o Ambiente não pode achar que a loja dele subiu

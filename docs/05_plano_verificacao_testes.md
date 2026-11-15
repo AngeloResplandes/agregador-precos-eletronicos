@@ -93,7 +93,7 @@ Legenda de situação: **OK** atendido · **CORRIGIDO** não atendia e foi corri
 | V43 | Código-fonte completo e instruções de execução | `backend/` (sistema), `frontend/` (interface web) + `README.md` | OK |
 | V44 | Relatório técnico (introdução, requisitos, modelagem, implementação, experimentos, resultados, conclusão) | `04_relatorio_tecnico.md/.docx` | OK |
 | V45 | Slides | deck no Claude Design (19 slides, nas 5 partes sugeridas pelo enunciado, com agenda e tempos, interface web e gráficos com os números de `resultados/`), exportado para `docs/apresentacao.pptx` | OK |
-| V46 | Demonstração prática (5 min) | roteiro da seção 3.5 e slides 12–13 | OK |
+| V46 | Demonstração prática (5 min) | roteiro da seção 3.5, um passo por experimento da seção 9 (Exp. 1–5), e slide 12 (roteiro) | **CORRIGIDO** (NC07) |
 | V47 | Referências | relatório, seção Referências | OK |
 
 ## 3. Plano de testes
@@ -156,6 +156,7 @@ cd backend && python3 -m unittest discover -s tests -v
 | CT57 | O mesmo com o agregador fora do ar | todos os clientes com o motivo da falha, sem exceção | `test_clientes_simultaneos_com_agregador_fora` | RNF04 |
 | CT58 | `iniciar_servicos.ler_latencias` (opção `--latencias` do gateway e do `iniciar_servicos.py`) | `"100,200,300,400"` vira lista; quantidade errada ou texto → erro do argparse | `test_ler_latencias` | RT2 |
 | CT67 | `cliente.executar` no modo comparar | imprime o relatório completo do sequencial, depois o do concorrente e por fim o comparativo com o speedup | `test_comparar_imprime_relatorio_dos_dois_modos` | RF11 |
+| CT68 | `cliente.py <produto> --clientes N` (Exp. 4 pelo terminal) | um lote de N clientes simultâneos por modo (só o escolhido, ou os dois em `comparar`), com tempo do lote, média/mín/máx, vazão e `Falhas: 0/N`; N fora de 1–50 ou não inteiro → erro do argparse | `test_cli_multiplos_clientes`, `test_cli_multiplos_clientes_compara_os_dois_modos`, `test_cli_clientes_fora_do_limite` | RNF03 / CA06 |
 
 Também ficam neste nível: `test_produto_inexistente`, `test_listar_produtos`, `test_ping`, `test_pesquisa_via_cliente`, `test_atraso_informado_pelo_cliente`, `test_listar`, `test_json_malformado_recebe_erro`, `test_agregador_fora_do_ar` (CA12) e os testes de `TestLoja` (busca por chave e por nome, item mais barato, listar, ping, validação).
 
@@ -173,19 +174,26 @@ Também ficam neste nível: `test_produto_inexistente`, `test_listar_produtos`, 
 | CT34 | Loja desligada e religada | 3/4 com `[ALERTA]`; depois 4/4 | `test_5_loja_desligada_e_recuperada` | RF09 / CA07 |
 | CT35 | Segundo `iniciar_servicos.py` com o primeiro aberto | código 1, mensagem "em uso", sem "Ambiente pronto" | `test_6_segundo_ambiente_com_portas_ocupadas_falha` | CA14 |
 | CT36 | SIGTERM no `iniciar_servicos.py` | todas as portas liberadas | `test_sigterm_encerra_todos_os_processos` | CA14 |
+| CT69 | Console do `iniciar_servicos.py`: `derrubar <loja>`, `subir <loja>`, `status`, `ajuda` | derruba e sobe a loja (processo real, latência original), sem diferenciar maiúsculas; ação repetida, loja inexistente ou comando desconhecido → `[!]`, sem exceção | `test_console_derruba_e_sobe_loja`, `test_console_comandos_invalidos` | RF09 / CA15 |
+| CT70 | Exp. 4 pela CLI com processos reais: `cliente.py rtx 4060 --clientes 10` | dois lotes (sequencial e concorrente) com `Falhas: 0/10` | `test_7_exp4_multiplos_clientes` | RNF03 / CA15 |
+| CT71 | Exp. 5 pela CLI: loja derrubada pelo console **durante** `cliente.py ssd --modo sequencial --atraso 1500` | a pesquisa conclui com 3/4 e `[ALERTA] MagaluTechSim: erro_comunicacao`, sem traceback; depois de `subir`, 4/4 | `test_8_exp5_loja_derrubada_durante_a_pesquisa` | RF09 / CA08 / CA15 |
 
 ### 3.5 Roteiro manual da demonstração (apresentação, ~5 min)
 
-| Passo | Comando | O que mostrar |
-|---|---|---|
-| 0 | `cd backend` | todos os comandos abaixo rodam dentro de `backend/` |
-| 1 | `python3 iniciar_servicos.py --latencias 100,200,300,400` | 4 lojas e o agregador como processos separados |
-| 2 | `python3 cliente.py --listar` | catálogo unido das lojas |
-| 3 | `python3 cliente.py rtx 4060` | relatório do sequencial e do concorrente, menor preço, melhor custo-benefício e speedup (soma × máximo) |
-| 4 | `python3 cliente.py notebook --modo concorrente --criterio custo_beneficio` | ordenação alternativa |
-| 5 | Em outro terminal, subir as lojas uma a uma (`loja_server.py`) e dar Ctrl+C na MagaluTechSim; repetir o passo 3 | 3/4 lojas e `[ALERTA]` com o motivo |
-| 6 | Subir a MagaluTechSim de novo e repetir | volta a 4/4 sem reiniciar o agregador |
-| 7 | `python3 cliente.py ssd --atraso -5` | erro tratado, sem traceback |
+O roteiro segue os cinco experimentos obrigatórios da seção 9 do enunciado, na mesma ordem, cada um com um comando
+real no terminal (é o mesmo do slide 12 do deck). Todos os comandos rodam em `backend/`.
+
+| Passo | Terminal | Comando | O que mostrar |
+|---|---|---|---|
+| 0 | 1 | `cd backend && python3 iniciar_servicos.py` | 4 lojas (150 ms cada) e o agregador como processos separados; o terminal fica aceitando comandos (`status`, `derrubar`, `subir`) |
+| Exp. 1 | 2 | `python3 cliente.py rtx 4060 --modo sequencial` | uma loja após a outra: tempo total ≈ 600 ms (soma), tempo de cada loja; a pesquisa é registrada em `resultados/log_pesquisas.csv` |
+| Exp. 2 | 2 | `python3 cliente.py rtx 4060 --modo concorrente` | uma thread por loja: ≈ 150 ms (a maior latência), mesmo resultado (PichauSim, R$ 1.864,00) |
+| Exp. 3 | 2 | `python3 cliente.py rtx 4060 --atraso 500` | atraso artificial de 500 ms em todas as lojas, os dois modos e o comparativo: ≈ 2.000 × ≈ 500 ms, speedup ≈ 4× |
+| Exp. 4 | 2 | `python3 cliente.py rtx 4060 --clientes 20` | 20 clientes TCP simultâneos em cada modo: tempo do lote, média/máx por cliente, vazão e `Falhas: 0/20` |
+| Exp. 5 | 2 e 1 | `python3 cliente.py ssd --modo sequencial --atraso 2000` e, enquanto ela roda (≈ 8 s), no terminal 1: `derrubar MagaluTechSim` | a pesquisa termina com 3/4 lojas e `[ALERTA] MagaluTechSim: erro_comunicacao`, sem traceback; `subir MagaluTechSim` e repetir → 4/4 sem reiniciar o agregador |
+
+Variações, se houver tempo: `python3 iniciar_servicos.py --latencias 100,200,300,400` (Exp. 3 com latências
+diferentes: soma × máximo), `--criterio custo_beneficio` e `python3 cliente.py ssd --atraso -5` (erro tratado).
 
 ### 3.6 Experimentos (desempenho e falhas)
 
@@ -264,6 +272,7 @@ Ambiente: macOS (Darwin arm64), Python 3.15.0, `127.0.0.1`.
 | `experimentos.py --rapido` + `graficos.py` depois da separação em `backend/` (em cópia temporária, para não sobrescrever `backend/resultados/`) | concluído em 40 s; speedup 3,97× (621,0 → 156,3 ms); Exp. 5 com 3/4 lojas e PichauSim como menor preço em todos os cenários de falha; 6 gráficos gerados. Valores coerentes com a bateria de referência |
 | Bateria completa `experimentos.py` + `graficos.py` na versão final (14h03) | concluída sem erros em ~2 min; speedup 3,97× (621,11 → 156,50 ms); Exp. 3b 1.020,55 ms (soma 1.000) × 405,93 ms (máximo 400); Exp. 4 sem falhas até 50 clientes (372 req/s no concorrente); Exp. 5 com 3/4 lojas e PichauSim como menor preço em todos os cenários de falha. Relatório (seções 5 a 8), `backend/resultados/` e slides atualizados com esses números |
 | Versão 1.2: código enxugado (ver tabela abaixo), mesmo protocolo, mesma API HTTP e mesma interface | 8 testes novos para as funções compartilhadas escritos antes do código (falharam pelo motivo esperado) e 1 removido (arquivamento do log, que deixou de existir): **82 testes passando**; plano da seção 3.8 executado por completo, todos os itens com o resultado esperado |
+| Roteiro da demonstração pelos 5 experimentos (NC07, 15/11/2026) | 7 testes novos (CT68–CT71) escritos antes do código e falhando pelo motivo esperado; depois, **90 testes passando em 42 s, nenhum pulado** (`test_sistema.py` com processos reais). Ensaio do roteiro da seção 3.5 com `iniciar_servicos.py` real e comandos pelo stdin: Exp. 1 621 ms; Exp. 2 156 ms; Exp. 3 2.016 × 506 ms (speedup 3,99×); Exp. 4 com 20 clientes: lote de 630 ms (sequencial) e 166 ms (concorrente), 0/20 falhas nos dois; Exp. 5 `derrubar MagaluTechSim` aos 3 s → 3/4 lojas e `erro_comunicacao`, `subir` → 4/4 |
 
 Tamanho do código antes × depois da versão 1.2:
 
@@ -288,6 +297,7 @@ arquivamento do log antigo foram removidos.
 | NC03 | Com as portas já ocupadas (por exemplo, um `iniciar_servicos.py` esquecido aberto), um novo `iniciar_servicos.py` ou `experimentos.py` anunciava "Ambiente pronto": o `ping` era respondido pelos processos antigos | Demonstração e experimentos rodando sobre processos errados; no Exp. 5, derrubar a loja não teria efeito | `Ambiente` verifica se a porta está livre e se o próprio processo continua vivo; se a subida falha, encerra o que já tinha subido | CT28, CT29, CT35 |
 | NC04 | SIGTERM (`kill`) ou SIGHUP (fechar o terminal) no `iniciar_servicos.py` deixava as 4 lojas e o agregador órfãos, ocupando as portas; Ctrl+C no `experimentos.py` mostrava traceback | Próxima execução falhava (ver NC03) | `tratar_sinais_de_encerramento()` converte SIGTERM/SIGHUP em Ctrl+C nos dois scripts; `experimentos.py` trata a interrupção. Na verificação final, o CT36 revelou uma condição de corrida: um sinal recebido enquanto um serviço ainda subia deixava esse processo órfão (o agregador, em 5 de 6 tentativas). O `Ambiente` passou a registrar cada processo no instante em que o cria (0 de 6 depois da correção) | CT36 |
 | NC05 | RF08 diz que o tempo total **e o tempo por loja** são gravados em `log_pesquisas.csv`, mas o CSV só tinha o tempo total | Divergência entre requisito e implementação | Nova coluna `tempos_lojas_ms` no CSV e campo `tempos_lojas_ms` na resposta. (Na versão 1.1, um log com colunas antigas era renomeado; com o formato estável, isso saiu na 1.2.) | CT22 |
+| NC07 | Em 15/11/2026: o roteiro da demonstração (slide 12 do deck e seção 3.5) não seguia os experimentos da seção 9 do enunciado. O Exp. 4 não tinha comando de terminal, e o passo "derrubar uma loja (Ctrl+C)" encerrava **todo** o `iniciar_servicos.py`, não uma loja; desativar uma loja durante a pesquisa exigia 6 terminais | A demonstração não mostrava os 5 experimentos pedidos | `cliente.py --clientes N` (Exp. 4) e console no `iniciar_servicos.py` (`derrubar`/`subir`/`status`) para o Exp. 5; roteiro da seção 3.5, slide 12 e README reescritos um passo por experimento. Os testes novos falharam antes do código (`ImportError: executar_comando`; `--clientes` desconhecido) | CT68–CT71 |
 | NC06 | Em 15/11/2026: no modo comparar (padrão da CLI), `cliente.py` fazia as duas pesquisas mas só imprimia o relatório do concorrente; o sequencial aparecia apenas como um tempo no comparativo | Na demonstração não dava para ver a tabela do modo sequencial | `cliente.executar` imprime o relatório de cada modo (sequencial e depois concorrente) antes do comparativo. O teste novo falhou antes da correção (`'MODO: SEQUENCIAL' not found`) | CT31, CT67 |
 
 ### Pendências do grupo
@@ -298,4 +308,5 @@ arquivamento do log antigo foram removidos.
 | PEND02 | Os números do relatório vinham da bateria anterior às correções | **Resolvida em 14/11/2026:** bateria completa rodada na versão final; relatório, `resultados/`, `.docx` e slides atualizados |
 | PEND03 | `img/arquitetura.png` e `img/casos_de_uso.png` mostravam a versão sem gateway/interface | **Resolvida em 14/11/2026:** renderizados de novo com `mermaid-cli` a partir de `diagramas/*.mmd`, `.docx` regerados e as imagens dos slides 5 (casos de uso, agora cinco) e 6 (arquitetura) trocadas no deck |
 | PEND04 | O deck ganhou o slide 12 (interface web), os diagramas novos nos slides 5 e 6 e o roteiro da demo em `backend/`, mas `docs/apresentacao.pptx` ainda era a exportação anterior (17 slides) | **Resolvida em 14/11/2026:** deck exportado de novo (PowerPoint, basic fonts) e `docs/apresentacao.pptx` substituído; conferidos 18 slides com os textos novos |
+| PEND05 | Em 15/11/2026, o slide 12 (roteiro da demonstração) passou a seguir os 5 experimentos (NC07), mas `docs/apresentacao.pptx` ainda é a exportação anterior | **Resolvida em 15/11/2026:** deck exportado de novo (PowerPoint, basic fonts) e `docs/apresentacao.pptx` substituído; conferidos 19 slides, o 12 com os 5 experimentos e as notas novas |
 | PEND05 | Deck redesenhado em 14/11/2026 (https://claude.ai/artifact/Lgii1Psd9TgHD3QbrMmJpz): visual escuro, 19 slides (agenda com tempos 2/4/4/5/3 min e divisão sugerida das falas entre os 5 integrantes nas notas), gráficos e arquitetura desenhados no próprio slide; todos os slides conferidos renderizados | **Resolvida em 14/11/2026:** deck novo exportado (PowerPoint, basic fonts) e `docs/apresentacao.pptx` substituído; conferidos 19 slides, 19 notas do apresentador, textos e números iguais aos do deck, e a capa renderizada com Arial/Courier New sem texto cortado |
