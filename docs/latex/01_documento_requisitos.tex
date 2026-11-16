@@ -1,0 +1,319 @@
+\input{abnt_comum}
+\input{dados_trabalho}
+\titulo{Agregador de Preços de Eletrônicos}
+\definirsubtitulo{Documento de Requisitos}
+\preambulo{\naturezatrabalho}
+
+\begin{document}
+\selectlanguage{brazil}
+\frenchspacing
+
+% ================================================================= PRÉ-TEXTUAIS
+\pretextual
+\capagrupo
+\folhaderostogrupo
+
+\paginapretextual{Histórico de revisões}
+\begin{center}\small
+  \begin{tabularx}{\textwidth}{@{}l l Y@{}}
+    \toprule
+    \textbf{Versão} & \textbf{Data} & \textbf{Alterações} \\
+    \midrule
+    1.0 & nov. 2026 & Versão inicial: problema, objetivo, escopo, atores, requisitos, restrições, casos de uso UC01--UC04 e critérios de aceitação CA01--CA15. \\
+    1.1 & nov. 2026 & Interface web (gateway HTTP como cliente TCP do agregador), caso de uso UC05 e critérios CA16--CA18. \\
+    1.2 & nov. 2026 & Roteiro da demonstração organizado pelos cinco experimentos do enunciado (UC04, CA15). \\
+    1.3 & nov. 2026 & Requisitos reduzidos aos oito RF e cinco RNF que seguem os exemplos das seções 5.2 e 5.3 do enunciado. \\
+    1.4 & 15 nov. 2026 & Edição em \LaTeX{} segundo as normas da ABNT. \\
+    \bottomrule
+  \end{tabularx}
+\end{center}
+\cleardoublepage
+
+\listafiguras
+\listaquadros
+\sumario
+
+% ================================================================= TEXTUAIS
+\textual
+
+\chapter{Introdução}
+
+Este documento especifica os requisitos do \textbf{Agregador de Preços de Eletrônicos}, desenvolvido pelo Grupo~VI como Trabalho~1 da disciplina Sistemas Distribuídos (Tema~6). A organização segue a seção~5 do enunciado \cite{enunciado2026}: análise do problema (descrição, objetivo e escopo), atores, requisitos funcionais e não funcionais, restrições, casos de uso e critérios de aceitação. A forma de apresentar os requisitos -- identificador, enunciado no formato ``o sistema deverá'', prioridade e rastreabilidade até o código -- segue \citeonline{sommerville2015}.
+
+Os diagramas de casos de uso, de arquitetura e de sequência estão no documento de \textbf{Modelagem}; a implementação, os experimentos e os resultados estão no \textbf{Relatório Técnico}. O protocolo de aplicação está especificado em \cod{docs/03\_protocolo.md} e o plano de testes em \cod{docs/05\_plano\_verificacao\_testes.md}.
+
+% -----------------------------------------------------------------
+\chapter{Análise do problema}
+
+\section{Descrição do problema}
+
+Quem compra eletrônicos (placas de vídeo, notebooks, monitores, SSDs, smartphones) costuma consultar várias lojas para achar o melhor preço. Fazer isso manualmente é lento. Além disso, o preço anunciado nem sempre é o custo final, porque frete, garantia e reputação do produto variam de loja para loja.
+
+Plataformas de comparação resolvem isso consultando várias fontes independentes. Cada consulta passa pela rede e tem uma latência própria. Se as consultas forem feitas \textbf{uma após a outra}, o tempo de resposta cresce com o número de lojas; se forem feitas \textbf{ao mesmo tempo}, o tempo total tende ao da loja mais lenta \cite{tanenbaum2007}.
+
+\section{Objetivo do sistema}
+
+Desenvolver uma aplicação cliente-servidor, em Python, com \textbf{sockets TCP} e \textbf{multithreading}, que:
+
+\begin{itemize}
+  \item receba do usuário a pesquisa de um eletrônico;
+  \item consulte pelo menos quatro lojas independentes, cada uma um processo servidor;
+  \item consolide, ordene e destaque a melhor oferta;
+  \item permita comparar experimentalmente a estratégia \textbf{sequencial} com a \textbf{concorrente}.
+\end{itemize}
+
+\section{Escopo}
+
+O \autoref{tab:escopo} delimita o que faz e o que não faz parte do sistema.
+
+\begin{quadro}[!htbp]
+  \centering\small
+  \caption{Escopo do sistema}\label{tab:escopo}
+  \begin{tabularx}{\textwidth}{|Y|Y|}
+    \hline
+    \textbf{Dentro do escopo} & \textbf{Fora do escopo} \\ \hline
+    Cliente de linha de comando (interativo e por argumentos). & Integração com lojas reais, preços reais ou APIs comerciais. \\ \hline
+    Interface web (Vite + React, em \cod{frontend/}) que usa um gateway HTTP local (\cod{backend/gateway\_http.py}) como cliente TCP do agregador. & Autenticação, carrinho de compras e pagamento. \\ \hline
+    Agregador TCP que atende vários clientes ao mesmo tempo. & Persistência em banco de dados, cache e replicação. \\ \hline
+    Quatro serviços de loja com catálogos simulados (arquivos JSON). & Comunicação entre máquinas diferentes (suportada pela configuração, mas não exigida nem testada). \\ \hline
+    Consultas sequenciais e concorrentes (threads). & \\ \hline
+    Ordenação por preço total e por custo-benefício (evolução do Tema~6). & \\ \hline
+    Tratamento de falhas: loja fora do ar, queda durante a consulta, timeout e mensagens inválidas. & \\ \hline
+    Registro do tempo de cada pesquisa e scripts para os cinco experimentos, com tabelas e gráficos. & \\ \hline  \end{tabularx}
+  \fonteautores
+\end{quadro}
+
+\section{Funcionalidades mínimas do Tema 6}
+
+O enunciado define, para o Tema~6, as funcionalidades mínimas e uma possibilidade de evolução \cite{enunciado2026}. O \autoref{qua:tema6} mostra o requisito funcional que atende cada uma.
+
+\begin{quadro}[!htbp]
+  \centering\small
+  \caption{Funcionalidades do Tema 6 e requisitos correspondentes}\label{qua:tema6}
+  \begin{tabularx}{\textwidth}{|Y|L{2.6cm}|}
+    \hline
+    \textbf{Funcionalidade (enunciado, Tema 6)} & \textbf{Requisitos} \\ \hline
+    Pesquisa de produtos & RF01 \\ \hline
+    Consulta a diferentes lojas independentes & RF02 \\ \hline
+    Apresentação dos preços & RF05 \\ \hline
+    Ordenação por preço & RF06 \\ \hline
+    Identificação da loja com menor preço & RF07 \\ \hline
+    Comparação entre consultas sequenciais e concorrentes & RF03, RF04, RF08 \\ \hline
+    Evolução: comparação de características técnicas, avaliações e custo-benefício & RF05, RF06, RF07 \\ \hline
+  \end{tabularx}
+  \fonteautores
+\end{quadro}
+
+% -----------------------------------------------------------------
+\chapter{Atores}
+
+Os atores do sistema estão no \autoref{tab:atores}. O \textbf{agregador} é um componente interno do sistema, não um ator: ele intermedia o usuário e as lojas.
+
+\begin{quadro}[!htbp]
+  \centering\small
+  \caption{Atores do sistema}\label{tab:atores}
+  \begin{tabularx}{\textwidth}{|L{3.6cm}|L{3.4cm}|Y|}
+    \hline
+    \textbf{Ator} & \textbf{Tipo} & \textbf{Descrição} \\ \hline
+    Usuário comprador & Primário (humano) & Informa o produto, o modo de consulta e o critério de ordenação, e analisa o resultado. \\ \hline
+    Pesquisador / avaliador & Primário (humano) & Executa os experimentos de desempenho e de falha e analisa tabelas e gráficos. \\ \hline
+    Serviço de loja & Secundário (sistema) & Processo independente que responde consultas sobre o seu catálogo. \\ \hline  \end{tabularx}
+  \fonteautores
+\end{quadro}
+
+% -----------------------------------------------------------------
+\chapter{Requisitos funcionais}
+
+Os oito requisitos funcionais (\autoref{tab:rf}) seguem os exemplos da seção~5.2 do enunciado \cite{enunciado2026}, adaptados ao tema. As duas interfaces do usuário -- o \cod{cliente.py} de linha de comando e a interface web, que usa um gateway HTTP como cliente TCP do agregador -- atendem esses mesmos requisitos.
+
+\legendaquadro{Requisitos funcionais}\label{tab:rf}\nopagebreak
+\begin{xltabular}{\textwidth}{|L{1.2cm}|Y|L{1.9cm}|}
+  \hline
+  \textbf{ID} & \textbf{Requisito} & \textbf{Prioridade} \\ \hline
+  \endfirsthead
+  \multicolumn{3}{l}{\small\itshape (continuação)}\\
+  \hline
+  \textbf{ID} & \textbf{Requisito} & \textbf{Prioridade} \\ \hline
+  \endhead
+  \small RF01 & \small O sistema deverá permitir que o usuário informe os parâmetros de uma pesquisa: o produto (com a lista dos produtos disponíveis no catálogo das lojas), o modo de consulta (sequencial, concorrente ou comparação dos dois) e o critério de ordenação. & \small Essencial \\ \hline
+  \small RF02 & \small O sistema deverá consultar diferentes serviços independentes: pelo menos quatro lojas, cada uma executando como processo servidor próprio. & \small Essencial \\ \hline
+  \small RF03 & \small O sistema deverá permitir consultas \textbf{sequenciais}, em que uma loja é consultada após a resposta da anterior. & \small Essencial \\ \hline
+  \small RF04 & \small O sistema deverá permitir consultas \textbf{concorrentes}, em que todas as lojas são consultadas simultaneamente por threads. & \small Essencial \\ \hline
+  \small RF05 & \small O sistema deverá apresentar os resultados encontrados: para cada loja, o produto, as especificações técnicas, o preço, o frete, o preço total, a avaliação, a garantia e o tempo de resposta, além das lojas sem o produto e das que falharam, com o motivo (fora do ar, queda, timeout), sem deixar de apresentar as demais. & \small Essencial \\ \hline
+  \small RF06 & \small O sistema deverá ordenar os resultados conforme um critério definido: preço total (preço + frete) ou índice de custo-benefício, à escolha do usuário. & \small Essencial \\ \hline
+  \small RF07 & \small O sistema deverá identificar a melhor opção segundo o critério escolhido: a \textbf{loja com menor preço total} e a \textbf{oferta de melhor custo-benefício}. & \small Essencial \\ \hline
+  \small RF08 & \small O sistema deverá registrar o tempo de execução das consultas (tempo total e tempo por loja) em \cod{resultados/log\_pesquisas.csv} (colunas \cod{tempo\_total\_ms} e \cod{tempos\_lojas\_ms}) e exibir o comparativo entre os modos sequencial e concorrente, com o speedup obtido. & \small Essencial \\ \hline\end{xltabular}
+\fonteautores
+
+% -----------------------------------------------------------------
+\chapter{Requisitos não funcionais}
+
+Os cinco requisitos não funcionais (\autoref{tab:rnf}) seguem os exemplos da seção~5.3 do enunciado \cite{enunciado2026}.
+
+\legendaquadro{Requisitos não funcionais}\label{tab:rnf}\nopagebreak
+\begin{xltabular}{\textwidth}{|L{1.4cm}|L{2.6cm}|Y|}
+  \hline
+  \textbf{ID} & \textbf{Categoria} & \textbf{Requisito} \\ \hline
+  \endfirsthead
+  \multicolumn{3}{l}{\small\itshape (continuação)}\\
+  \hline
+  \textbf{ID} & \textbf{Categoria} & \textbf{Requisito} \\ \hline
+  \endhead
+  \small RNF01 & \small Comunicação & \small A comunicação entre os componentes (cliente, agregador e lojas) deverá utilizar \textbf{sockets TCP} reais, com o protocolo de aplicação documentado (JSON UTF-8 terminado por \cod{\textbackslash n}, uma requisição por conexão, limite de 64~KB). \\ \hline
+  \small RNF02 & \small Concorrência & \small A estratégia concorrente deverá utilizar \textbf{threads} (\cod{threading}), uma por loja consultada, de modo que o tempo total fique próximo da maior latência entre as lojas (sobrecarga inferior a 50~ms em ambiente local). \\ \hline
+  \small RNF03 & \small Escalabilidade & \small O servidor deverá atender \textbf{múltiplas conexões simultaneamente}: o agregador e as lojas usam uma thread por conexão e devem atender pelo menos 50 clientes simultâneos sem falhas. \\ \hline
+  \small RNF04 & \small Confiabilidade & \small O sistema deverá tratar falhas de comunicação (conexão recusada, queda durante a consulta, timeout de 2,5~s por loja, mensagens malformadas) sem encerrar o agregador e sem exibir \textit{traceback} ao usuário. \\ \hline
+  \small RNF05 & \small Experimentação & \small A aplicação deverá permitir experimentos de desempenho: latência das lojas configurável (por loja ou por requisição), execução automatizada dos cinco experimentos com tabelas e gráficos e resultados reprodutíveis. \\ \hline\end{xltabular}
+\fonteautores
+
+% -----------------------------------------------------------------
+\chapter{Restrições}
+
+\begin{itemize}
+  \item Linguagem \textbf{Python 3.10+} e apenas a biblioteca padrão (\cod{socket}, \cod{threading}, \cod{json}); \cod{matplotlib} só para os gráficos. Configuração centralizada em \cod{config.py}.
+  \item Comunicação obrigatoriamente por \textbf{sockets TCP} \cite{kurose2021,python-socket}. Não é permitido simular a comunicação.
+  \item Pelo menos \textbf{quatro} serviços independentes, cada um em processo separado e em porta TCP distinta (9001--9004). O agregador usa a porta 8000.
+  \item Dados de produtos e preços \textbf{simulados}, armazenados em \cod{backend/dados/lojas/*.json}.
+  \item Organização: o sistema distribuído (Python) fica em \cod{backend/} e a interface web em \cod{frontend/}. HTTP existe apenas entre o navegador e o gateway; o gateway é um cliente TCP do agregador, como o \cod{cliente.py}.
+  \item Execução local (\cod{127.0.0.1}), com demonstração prática ao vivo na apresentação de 16/11/2026.
+\end{itemize}
+
+% -----------------------------------------------------------------
+\chapter{Casos de uso}
+
+A \autoref{fig:casos-uso} apresenta o diagrama UML de casos de uso; o documento de Modelagem descreve a notação e as relações \textit{include} e \textit{extend}. As seções a seguir detalham cada caso de uso.
+
+\begin{figure}[htb]
+  \centering
+  \caption{Diagrama de casos de uso}\label{fig:casos-uso}
+  \diagrama{casos_de_uso}
+  \fonteautores
+\end{figure}
+
+\section{UC01 -- Pesquisar produto}
+
+\begin{description}[leftmargin=0pt, labelsep=0.4em, itemsep=0.15em]
+  \item[Ator:] Usuário comprador. \textbf{Requisitos:} RF01--RF08, RNF01--RNF04.
+  \item[Pré-condição:] agregador e lojas em execução.
+  \item[Fluxo principal:]\leavevmode
+  \begin{enumerate}
+    \item O usuário informa o produto, o modo e o critério.
+    \item O cliente envia a requisição \cod{consultar} ao agregador.
+    \item O agregador consulta as quatro lojas (sequencial ou concorrente).
+    \item Cada loja responde com a sua oferta.
+    \item O agregador ordena, identifica o menor preço e o melhor custo-benefício e registra o tempo.
+    \item O cliente exibe o relatório.
+  \end{enumerate}
+  \item[Fluxos alternativos:]\leavevmode
+  \begin{itemize}
+    \item[A1:] produto inexistente $\rightarrow$ as lojas respondem \cod{nao\_encontrado} e o cliente informa que não há ofertas.
+    \item[A2:] uma loja falha (fora do ar, queda ou timeout) $\rightarrow$ a falha é listada e as demais ofertas são exibidas.
+    \item[A3:] agregador indisponível $\rightarrow$ o cliente exibe mensagem amigável.
+    \item[A4:] parâmetro inválido $\rightarrow$ o agregador responde \cod{erro\_requisicao} e o cliente exibe o motivo.
+  \end{itemize}
+\end{description}
+
+\section{UC02 -- Comparar estratégias sequencial × concorrente}
+
+\begin{description}[leftmargin=0pt, labelsep=0.4em, itemsep=0.15em]
+  \item[Ator:] Usuário comprador. \textbf{Requisitos:} RF03, RF04, RF08.
+  \item[Fluxo:] o usuário escolhe o modo ``comparar''. O cliente executa o UC01 nos dois modos e exibe o relatório de cada um, os dois tempos e o speedup.
+\end{description}
+
+\section{UC03 -- Listar catálogo}
+
+\begin{description}[leftmargin=0pt, labelsep=0.4em, itemsep=0.15em]
+  \item[Ator:] Usuário comprador. \textbf{Requisito:} RF01.
+  \item[Fluxo:] o cliente envia \cod{listar\_produtos}. O agregador consulta as lojas concorrentemente e devolve a união das palavras-chave.
+\end{description}
+
+\section{UC04 -- Executar experimentos}
+
+\begin{description}[leftmargin=0pt, labelsep=0.4em, itemsep=0.15em]
+  \item[Ator:] Pesquisador. \textbf{Requisitos:} RF08, RNF03, RNF05.
+  \item[Fluxo:] \cod{experimentos.py} sobe as lojas e o agregador como processos, executa os experimentos 1 a 5 com repetições e grava os CSVs e \cod{tabelas.md}. Em seguida, \cod{graficos.py} gera os gráficos.
+  \item[Fluxo alternativo (ao vivo, na apresentação):] com \cod{iniciar\_servicos.py} no ar, o pesquisador executa cada experimento pelo \cod{cliente.py}: \cod{--modo sequencial} (Exp.~1), \cod{--modo concorrente} (Exp.~2), \cod{--atraso MS} (Exp.~3), \cod{--clientes N} (Exp.~4) e, para o Exp.~5, digita \cod{derrubar <loja>} no terminal do \cod{iniciar\_servicos.py} durante uma pesquisa e depois \cod{subir <loja>}.
+\end{description}
+
+\section{UC05 -- Usar a interface web}
+
+\begin{description}[leftmargin=0pt, labelsep=0.4em, itemsep=0.15em]
+  \item[Ator:] Usuário comprador ou avaliador. \textbf{Requisitos:} RF01--RF08, RNF03--RNF05 (a interface é mais um cliente do agregador).
+  \item[Pré-condição:] \cod{backend/gateway\_http.py} em execução (ele sobe as lojas e o agregador) e a interface aberta no navegador.
+  \item[Fluxo principal:] o usuário pesquisa na aba \textit{Pesquisa}; o gateway envia \cod{consultar} ao agregador por TCP (duas vezes no modo ``comparar'') e a interface mostra destaques, tempos por loja, speedup e a tabela de ofertas.
+  \item[Fluxos alternativos:]\leavevmode
+  \begin{itemize}
+    \item[A1:] na aba \textit{Lojas e falhas}, o usuário derruba uma loja; a pesquisa seguinte mostra 3/4 lojas e o motivo da falha; ao subir a loja de novo, ela volta a responder.
+    \item[A2:] na aba \textit{Teste de carga}, o usuário dispara N clientes TCP simultâneos (1--50) e vê média, p95, vazão e falhas.
+    \item[A3:] gateway ou agregador fora do ar $\rightarrow$ a interface exibe mensagem amigável, sem \textit{traceback}.
+  \end{itemize}
+\end{description}
+
+% -----------------------------------------------------------------
+\chapter{Critérios de aceitação}
+
+Cada critério do \autoref{tab:ca} pode ser verificado por um experimento ou por um teste automatizado da pasta \cod{backend/tests/}. A suíte tem 90 testes e todos passam.
+
+{\small
+\legendaquadro{Critérios de aceitação}\label{tab:ca}\nopagebreak
+\begin{xltabular}{\textwidth}{|L{1.0cm}|Y|L{5.6cm}|}
+  \hline
+  \textbf{ID} & \textbf{Critério} & \textbf{Verificação} \\ \hline
+  \endfirsthead
+  \multicolumn{3}{l}{\itshape (continuação)}\\
+  \hline
+  \textbf{ID} & \textbf{Critério} & \textbf{Verificação} \\ \hline
+  \endhead
+  CA01 & Uma pesquisa por ``rtx 4060'' com as 4 lojas ativas retorna 4 ofertas ordenadas por preço total crescente, e o menor preço é da PichauSim (R\$~1.864,00). & \cod{test\_ordena\_por\_preco\_e\_identifica\_menor}, \cod{test\_pesquisa\_via\_cliente} \\ \hline
+  CA02 & Com o critério \cod{custo\_beneficio}, as ofertas aparecem em ordem decrescente de score. & \cod{test\_ordena\_por\_custo\_beneficio} \\ \hline
+  CA03 & Os modos sequencial e concorrente produzem o mesmo resultado (mesma ordem de lojas). & \cod{test\_sequencial\_e\_concorrente\_dao\_mesmo\_resultado} \\ \hline
+  CA04 & Com 4 lojas de 100~ms, o modo sequencial leva $\geq$~400~ms e o concorrente $<$~250~ms (speedup $>$~2,5). & \cod{test\_concorrente\_mais\_rapido\_que\_sequencial}, Exp.~1--3 \\ \hline
+  CA05 & Com lojas heterogêneas (50/100/150/200~ms), o modo sequencial $\approx$ soma e o concorrente $\approx$ máximo das latências. & \cod{test\_latencia\_heterogenea}, Exp.~3b \\ \hline
+  CA06 & 20 clientes simultâneos recebem respostas completas, sem falhas. Nos experimentos, 50 clientes. & \cod{test\_multiplos\_clientes\_simultaneos}, Exp.~4 \\ \hline
+  CA07 & Com uma loja desligada, a pesquisa retorna 3 ofertas e aponta \cod{erro\_comunicacao} para a loja ausente. & \cod{test\_loja\_desligada}, Exp.~5a \\ \hline
+  CA08 & Se a loja cair durante a consulta, a falha é detectada imediatamente (sem esperar o timeout) e a pesquisa conclui com 3 ofertas. & \cod{test\_loja\_cai\_durante\_a\_consulta}, Exp.~5b \\ \hline
+  CA09 & Uma loja que não responde em 2,5~s recebe status \cod{timeout}, e a pesquisa concorrente não passa de $\approx$~2,5~s. & \cod{test\_loja\_lenta\_gera\_timeout}, Exp.~5c \\ \hline
+  CA10 & Requisições inválidas (operação desconhecida, produto vazio, modo/critério/atraso inválidos, JSON malformado) recebem \cod{erro\_requisicao}, e o servidor continua atendendo. & \cod{test\_requisicoes\_invalidas}, \cod{test\_json\_malformado\_recebe\_erro}, \cod{test\_erro\_interno\_nao\_derruba\_servidor} \\ \hline
+  CA11 & Cada pesquisa gera uma linha em \cod{log\_pesquisas.csv} com o tempo total e o tempo de cada loja. & \cod{test\_registra\_tempo\_em\_csv}, \cod{test\_registra\_tempo\_de\_cada\_loja} \\ \hline
+  CA12 & Com o agregador desligado, o cliente exibe uma mensagem de erro amigável e termina com código 1. & \cod{test\_agregador\_fora\_do\_ar} \\ \hline
+  CA13 & Uma loja que responde \cod{sucesso} com dados incompletos ou de tipo errado é registrada como \cod{erro\_comunicacao}, e a pesquisa conclui com as demais lojas. & \cod{test\_loja\_com\_resposta\_incompleta}, \cod{test\_loja\_com\_preco\_nao\_numerico} \\ \hline
+  CA14 & Com as portas já ocupadas, \cod{iniciar\_servicos.py} recusa a subida (código 1) em vez de anunciar um ambiente que não é o seu; ao receber Ctrl+C, SIGTERM ou SIGHUP, encerra todas as lojas e o agregador. & \cod{test\_porta\_ocupada\_e\_detectada}, \cod{test\_6\_segundo\_ambiente\_com\_portas\_ocupadas\_falha}, \cod{test\_sigterm\_encerra\_todos\_os\_processos} \\ \hline
+  CA15 & O roteiro da demonstração segue os 5 experimentos do enunciado e funciona com processos reais nas portas 8000 e 9001--9004: sequencial, concorrente, atraso artificial, N clientes simultâneos (\cod{cliente.py --clientes N}) e uma loja derrubada durante a pesquisa pelo console do \cod{iniciar\_servicos.py} (\cod{derrubar}/\cod{subir}), além de listar, custo-benefício e parâmetro inválido. & \cod{tests/test\_sistema.py} (\cod{TestDemonstracao}), \cod{test\_console\_derruba\_e\_sobe\_loja}, \cod{test\_cli\_multiplos\_clientes} \\ \hline
+  CA16 & Pelo gateway HTTP, a pesquisa ``rtx 4060'' retorna o menor preço da PichauSim (R\$~1.864,00), o modo ``comparar'' devolve os dois modos e o speedup, e requisições inválidas recebem HTTP 400 \cod{erro\_requisicao}. & \cod{test\_gateway.py} (\cod{test\_consulta\_concorrente}, \cod{test\_comparar\_devolve\_os\_dois\_modos\_e\_speedup}, \cod{test\_requisicoes\_invalidas}) \\ \hline
+  CA17 & Pelo gateway, uma loja pode ser derrubada e subida de novo (processo real); com uma loja fora do ar a pesquisa retorna 3/4 lojas; com o agregador fora do ar a resposta é HTTP 502 com mensagem amigável. & \cod{test\_derrubar\_e\_subir\_loja}, \cod{test\_loja\_desligada\_aparece\_na\_consulta}, \cod{test\_agregador\_fora\_do\_ar} \\ \hline
+  CA18 & O teste de carga do gateway atende 20 clientes simultâneos sem falhas e recusa mais de 50; o gateway só serve gráficos de \cod{resultados/} (sem acesso a outros arquivos). & \cod{test\_carga\_com\_20\_clientes}, \cod{test\_carga\_fora\_do\_limite}, \cod{test\_resultados\_nao\_permite\_sair\_do\_diretorio} \\ \hline\end{xltabular}}
+\fonteautores
+
+% -----------------------------------------------------------------
+\chapter{Rastreabilidade}
+
+O \autoref{tab:rastreabilidade} liga cada requisito aos casos de uso e aos módulos que o implementam. Os módulos Python ficam em \cod{backend/}; a interface web, em \cod{frontend/}.
+
+{\small
+\legendaquadro{Matriz de rastreabilidade}\label{tab:rastreabilidade}\nopagebreak
+\begin{xltabular}{\textwidth}{|L{1.9cm}|L{3.4cm}|Y|}
+  \hline
+  \textbf{Requisito} & \textbf{Casos de uso} & \textbf{Módulos} \\ \hline
+  \endfirsthead
+  \multicolumn{3}{l}{\itshape (continuação)}\\
+  \hline
+  \textbf{Requisito} & \textbf{Casos de uso} & \textbf{Módulos} \\ \hline
+  \endhead
+  RF01 & UC01, UC02, UC03, UC05 & \cod{cliente.py}, \cod{agregador.py} (\cod{listar\_produtos}), \cod{gateway\_http.py} + \cod{frontend/src/} \\ \hline
+  RF02 & UC01 & \cod{loja\_server.py}, \cod{config.py}, \cod{iniciar\_servicos.py} \\ \hline
+  RF03, RF04 & UC01, UC02 & \cod{agregador.py} (\cod{consultar\_todas}) \\ \hline
+  RF05 & UC01, UC05 & \cod{agregador.py} (\cod{executar\_busca}), \cod{cliente.py}, \cod{frontend/src/} \\ \hline
+  RF06, RF07 & UC01 & \cod{agregador.py} (\cod{executar\_busca}, \cod{calcular\_score\_custo\_beneficio}) \\ \hline
+  RF08 & UC01, UC02, UC04 & \cod{agregador.py} (\cod{RegistroPesquisas}), \cod{cliente.py} (\cod{comparar}) \\ \hline
+  RNF01 & todos & \cod{protocolo.py}, \cod{servidor\_base.py} \\ \hline
+  RNF02 & UC01, UC02 & \cod{agregador.py} (uma thread por loja + \cod{join()}) \\ \hline
+  RNF03 & UC01, UC04 & \cod{servidor\_base.py}, \cod{cliente.py} (\cod{disparar\_clientes\_simultaneos}, \cod{--clientes}) \\ \hline
+  RNF04 & UC01 & \cod{protocolo.py}, \cod{agregador.py} (\cod{validar\_resposta\_loja}), \cod{cliente.py}, \cod{iniciar\_servicos.py} (\cod{derrubar}/\cod{subir}) \\ \hline
+  RNF05 & UC04 & \cod{loja\_server.py} (latência), \cod{protocolo.py} (\cod{atraso\_ms}), \cod{iniciar\_servicos.py} (\cod{--latencias}), \cod{experimentos.py}, \cod{graficos.py} \\ \hline\end{xltabular}}
+\fonteautores
+
+% ================================================================= PÓS-TEXTUAIS
+\postextual
+\bibliography{referencias}
+
+\end{document}

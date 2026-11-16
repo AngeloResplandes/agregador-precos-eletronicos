@@ -218,10 +218,13 @@ agregador_precos_eletronicos/
 │   └── .venv/                # ambiente virtual (criado na instalação)
 ├── frontend/                 # interface web (Vite + React + TypeScript)
 │   └── src/                  # App.tsx, api.ts, componentes.tsx, formato.ts, estilos.css, telas/
-└── docs/                     # requisitos, modelagem, protocolo, relatório, plano de testes (.md/.docx)
+└── docs/                     # requisitos, modelagem, protocolo, relatório, plano de testes (.md/.docx/.pdf)
+    └── latex/                # fontes LaTeX (abnTeX2) dos PDFs entregáveis
 ```
 
 ## Documentação (`docs/`)
+
+Entregáveis em PDF (formatação ABNT, classe abnTeX2): `01_documento_requisitos.pdf`, `02_modelagem.pdf` e `04_relatorio_tecnico.pdf`. As fontes ficam em `docs/latex/` (diagramas desenhados em TikZ em `latex/figuras/`; capa e autores em `latex/dados_trabalho.tex`). Para regerar, instale o Tectonic (`brew install tectonic`) e rode `docs/latex/gerar_pdf.sh`.
 
 - `01_documento_requisitos.md` / `.docx`: problema, escopo, atores, RF/RNF, restrições, casos de uso e critérios de aceitação.
 - `02_modelagem.md`: diagramas de casos de uso, arquitetura e sequência (Mermaid + PNG).

@@ -41,6 +41,18 @@ Desenvolver uma aplicação cliente-servidor, em Python com **sockets TCP** e **
 - Persistência em banco de dados, cache e replicação.
 - Comunicação entre máquinas diferentes (é suportada pela configuração, mas não é exigida nem testada).
 
+### Funcionalidades mínimas do Tema 6
+
+| Funcionalidade (enunciado, Tema 6) | Requisitos |
+|---|---|
+| Pesquisa de produtos | RF01 |
+| Consulta a diferentes lojas independentes | RF02 |
+| Apresentação dos preços | RF05 |
+| Ordenação por preço | RF06 |
+| Identificação da loja com menor preço | RF07 |
+| Comparação entre consultas sequenciais e concorrentes | RF03, RF04, RF08 |
+| Evolução: comparação de características técnicas, avaliações e custo-benefício | RF05, RF06, RF07 |
+
 ## 4. Atores
 
 | Ator | Tipo | Descrição |

@@ -1,0 +1,48 @@
+% Diagrama UML de casos de uso (mesmo conteúdo de docs/diagramas/casos_de_uso.svg)
+\begin{tikzpicture}[
+    font=\small,
+    uc/.style={ellipse, draw, thick, align=center, minimum width=3.4cm, minimum height=1.25cm, inner sep=1pt, fill=white},
+    assoc/.style={thin},
+    dep/.style={densely dashed, -{Stealth[length=2.4mm]}},
+    rot/.style={font=\footnotesize\itshape, fill=white, inner sep=1pt}]
+  % ator UML: \ator{nome}{posição}{rótulo}
+  \newcommand{\ator}[3]{%
+    \begin{scope}[shift={#2}, thick]
+      \draw (0,0.62) circle (0.2);
+      \draw (0,0.42) -- (0,-0.2);
+      \draw (-0.38,0.2) -- (0.38,0.2);
+      \draw (0,-0.2) -- (-0.28,-0.65);
+      \draw (0,-0.2) -- (0.28,-0.65);
+      \node[align=center, below] at (0,-0.7) {#3};
+      \coordinate (#1) at (0,0.1);
+    \end{scope}}
+
+  % fronteira do sistema
+  \draw[thick, rounded corners=3pt, fill=black!3] (2.6,0) rectangle (14.4,11.1);
+  \node[font=\small\bfseries] at (8.5,10.7) {Sistema Agregador de Preços de Eletrônicos};
+
+  \node[uc] (uc03) at (4.75,9.6)  {\textbf{UC03}\\Listar catálogo};
+  \node[uc] (uc02) at (4.75,7.7)  {\textbf{UC02}\\Comparar sequencial\\× concorrente};
+  \node[uc] (uc05) at (4.75,5.0)  {\textbf{UC05}\\Usar a interface web};
+  \node[uc] (uc04) at (4.6,1.2)  {\textbf{UC04}\\Executar experimentos};
+  \node[uc, minimum width=3.8cm] (uc01) at (9.6,6.4) {\textbf{UC01}\\Pesquisar produto};
+  \node[uc, minimum width=2.8cm] (falha) at (8.0,1.2) {Tratar falha\\de loja};
+  \node[uc] (ordena) at (12.55,4.1) {Ordenar e identificar\\melhor oferta};
+  \node[uc] (tempo) at (11.3,1.2) {Registrar tempo\\de execução};
+
+  \ator{comprador}{(0.9,6.9)}{Usuário\\comprador}
+  \ator{pesquisador}{(0.9,2.4)}{Pesquisador}
+  \ator{loja}{(15.85,6.6)}{Serviço de loja\\{\footnotesize «ator secundário»}\\{\footnotesize ×4}}
+
+  \foreach \u in {uc03,uc02,uc01,uc05} \draw[assoc, shorten <=0.35cm] (comprador) -- (\u);
+  \foreach \u in {uc05,uc04} \draw[assoc, shorten <=0.35cm] (pesquisador) -- (\u);
+  \foreach \u in {uc01,uc03} \draw[assoc, shorten <=0.35cm] (loja) -- (\u);
+
+  \draw[dep] (uc02) -- node[rot, above, sloped, pos=0.4] {«include»} (uc01);
+  \draw[dep] (uc05) -- node[rot, below, sloped, pos=0.4] {«include»} (uc01);
+  \draw[dep] (uc05) -- node[rot, right] {«include»} (uc02);
+  \draw[dep] (uc04) -- node[rot, above, sloped] {«include»} (uc01);
+  \draw[dep] (uc01) -- node[rot, above, sloped, pos=0.5] {«include»} (ordena);
+  \draw[dep] (uc01) -- node[rot, below, sloped, pos=0.62] {«include»} (tempo);
+  \draw[dep] (falha) -- node[rot, left, pos=0.5] {«extend»} (uc01);
+\end{tikzpicture}

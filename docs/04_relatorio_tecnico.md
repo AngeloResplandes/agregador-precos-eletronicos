@@ -18,10 +18,9 @@ O documento está organizado assim:
 - seção 2: requisitos;
 - seção 3: modelagem;
 - seção 4: implementação;
-- seção 5: metodologia dos experimentos;
-- seção 6: resultados;
-- seção 7: discussão;
-- seção 8: conclusões.
+- seção 5: experimentos (ambiente e metodologia);
+- seção 6: resultados e discussão;
+- seção 7: conclusão.
 
 ## 2. Requisitos
 
@@ -159,7 +158,19 @@ Para a demonstração, há também uma interface web (`frontend/`, Vite + React 
 
 Como o navegador não abre sockets TCP, a interface chama o **gateway HTTP** (`backend/gateway_http.py`, só biblioteca padrão: `http.server.ThreadingHTTPServer`). O gateway não substitui nada do sistema: ele é mais um cliente TCP do agregador e usa a mesma função do `cliente.py`. O HTTP existe apenas entre o navegador e o gateway, e a comunicação agregador ↔ lojas continua igual. Por padrão, o gateway sobe as lojas e o agregador com `iniciar_servicos.Ambiente`, o que permite derrubar e subir uma loja pela interface; com `--externo`, ele só se conecta a serviços já em execução. A API está no Apêndice A de `03_protocolo.md`.
 
-## 5. Metodologia dos experimentos
+### 4.8 Execução e demonstração
+
+Em `backend/`, o terminal 1 roda `python3 iniciar_servicos.py` (4 lojas + agregador; aceita `derrubar <loja>`, `subir <loja>` e `status`) e o terminal 2 roda o `cliente.py`. Roteiro da demonstração, um passo por experimento:
+
+| Exp. | Comando (terminal 2) | O que mostra |
+|---|---|---|
+| 1 | `python3 cliente.py rtx 4060 --modo sequencial` | tempo ≈ soma (≈ 600 ms) |
+| 2 | `python3 cliente.py rtx 4060 --modo concorrente` | tempo ≈ maior latência (≈ 150 ms) |
+| 3 | `python3 cliente.py rtx 4060 --atraso 500` | os dois modos com atraso artificial e o speedup |
+| 4 | `python3 cliente.py rtx 4060 --clientes 20` | 20 clientes simultâneos: tempos, vazão e falhas |
+| 5 | `python3 cliente.py ssd --modo sequencial --atraso 2000` e `derrubar MagaluTechSim` no terminal 1 | 3/4 lojas e `erro_comunicacao`; após `subir MagaluTechSim`, 4/4 |
+
+## 5. Experimentos
 
 - **Ambiente:** macOS (Darwin arm64), 10 CPUs, Python 3.15.0, tudo em `127.0.0.1`.
 - **Execução de referência:** bateria completa de 14/11/2026 (14h03), com a versão final do código, depois das correções registradas em `05_plano_verificacao_testes.md`. A saída completa está em `backend/resultados/saida_experimentos.txt`.
@@ -252,7 +263,7 @@ Em todos os cenários a pesquisa foi concluída e o menor preço (PichauSim) foi
 
 ![Gráfico 6](../backend/resultados/g6_indisponibilidade.png)
 
-## 7. Discussão
+### 6.5 Discussão
 
 **Ganho da concorrência (Exp. 1–3).**
 - No modo sequencial, o tempo total segue a soma das latências: 4 × 150 ms = 600 ms previstos contra 621 ms medidos.
@@ -287,7 +298,7 @@ Em todos os cenários a pesquisa foi concluída e o menor preço (PichauSim) foi
 - Os catálogos são pequenos e estáticos.
 - O agregador não usa cache, nem reenvia consultas que falharam, nem replica as lojas. Esses são caminhos naturais para o projeto final da disciplina.
 
-## 8. Conclusões
+## 7. Conclusão
 
 O sistema cumpre os requisitos do enunciado:
 - comunicação real por **sockets TCP** entre cliente, agregador e **quatro lojas independentes** (processos separados);
@@ -297,6 +308,21 @@ O sistema cumpre os requisitos do enunciado:
 - **tratamento de erros e desconexões**;
 - **registro do tempo** de cada pesquisa;
 - consolidação com identificação do menor preço e do melhor custo-benefício.
+
+Atendimento aos requisitos técnicos da seção 7 do enunciado:
+
+| Requisito técnico | Onde é atendido |
+|---|---|
+| 1. Sockets TCP | `protocolo.py`, `servidor_base.py` |
+| 2. ≥ 4 serviços independentes | 4 lojas, um processo e uma porta cada (9001–9004) |
+| 3. Consultas sequenciais | `consultar_todas`; Exp. 1 |
+| 4. Consultas concorrentes com threads | uma thread por loja + `join()`; Exp. 2 |
+| 5. Múltiplos clientes | uma thread por conexão; Exp. 4 (50 clientes, 0 falhas) |
+| 6. Protocolo definido e documentado | seção 4.5 e `03_protocolo.md` |
+| 7. Erros e desconexões | seção 4.4; Exp. 5 |
+| 8. Registro do tempo | `tempo_total_ms` e `tempos_lojas_ms` em `log_pesquisas.csv` |
+| 9. Consolidação e apresentação | ofertas ordenadas, menor preço e melhor custo-benefício |
+| 10. Demonstração | roteiro da seção 4.8 e interface web |
 
 Sobre multithreading, os experimentos mostram que:
 

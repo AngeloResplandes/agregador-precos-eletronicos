@@ -1,0 +1,56 @@
+% Diagrama de sequência "Pesquisar produto" (mesmo conteúdo de docs/diagramas/sequencia_pesquisa.mmd)
+\begin{tikzpicture}[
+    font=\footnotesize,
+    part/.style={draw, thick, align=center, fill=white, minimum height=0.95cm, minimum width=2.1cm, inner sep=2pt},
+    msg/.style={-{Stealth[length=2.2mm]}, thick},
+    ret/.style={-{Stealth[length=2.2mm]}, densely dashed},
+    rot/.style={font=\scriptsize, above, inner sep=1.5pt, align=center},
+    fio/.style={font=\scriptsize\itshape, anchor=north east, inner sep=2pt},
+    nota/.style={draw, fill=black!5, font=\scriptsize, align=left, inner sep=3pt}]
+  \def\fim{-15.6}
+  \def\xe{4.4}\def\xd{16.1}% limites do bloco par
+  % participantes: nome / x / rótulo
+  \foreach \n/\x/\r in {U/0.45/Usuário, C/2.65/\cod{cliente.py}, A/5.0/Agregador\\:8000,
+                        K/7.45/KabumSim\\:9001, P/9.95/PichauSim\\:9002,
+                        T/12.45/TerabyteSim\\:9003, M/14.95/MagaluTechSim\\:9004} {
+    \node[part, minimum width={\ifx\n U 1.5cm\else 2.1cm\fi}] (\n) at (\x,0) {\r};
+    \coordinate (\n x) at (\x,0);
+    \draw[densely dashed, black!55] (\n.south) -- (\x,\fim);
+  }
+  % ativação do agregador
+  \filldraw[fill=black!15] (4.88,-2.2) rectangle (5.12,-14.0);
+
+  % \mensagem[estilo]{origem}{destino}{y}{rótulo}
+  \newcommand{\mensagem}[5][msg]{%
+    \draw[#1] ($(#2x)+(0,#4)$) -- ($(#3x)+(0,#4)$) node[rot, midway] {#5};}
+
+  \mensagem{U}{C}{-1.7}{1: produto,\\modo, critério}
+  \mensagem{C}{A}{-2.4}{2: \cod{connect()}\\+ \cod{consultar}}
+  \node[nota, anchor=west] at (5.3,-2.95) {valida a requisição e inicia o cronômetro (\cod{perf\_counter})};
+
+  % bloco par: quatro threads ao mesmo tempo
+  \draw[thick] (\xe,-3.5) rectangle (\xd,-11.6);
+  \node[draw, fill=white, font=\scriptsize\bfseries, anchor=north west, inner sep=2pt] at (\xe,-3.5) {par};
+  \node[fio] at (\xd,-3.5) {[Thread 1]};
+  \mensagem{A}{K}{-4.2}{3: \cod{consultar}}
+  \mensagem[ret]{K}{A}{-5.1}{4: \cod{sucesso}\\R\$ 1.899,90}
+  \draw[densely dashed] (\xe,-5.45) -- (\xd,-5.45);
+  \node[fio] at (\xd,-5.45) {[Thread 2]};
+  \mensagem{A}{P}{-6.15}{5: \cod{consultar}}
+  \mensagem[ret]{P}{A}{-7.05}{6: \cod{sucesso}\\R\$ 1.864,00}
+  \draw[densely dashed] (\xe,-7.4) -- (\xd,-7.4);
+  \node[fio] at (\xd,-7.4) {[Thread 3]};
+  \mensagem{A}{T}{-8.1}{7: \cod{consultar}}
+  \mensagem[ret]{T}{A}{-9.0}{8: \cod{sucesso}\\R\$ 1.887,90}
+  \draw[densely dashed] (\xe,-9.35) -- (\xd,-9.35);
+  \node[fio] at (\xd,-9.35) {[Thread 4]};
+  \draw[msg] ($(Ax)+(0,-10.05)$) -- ($(Mx)+(-0.15,-10.05)$) node[rot, pos=0.4] {9: \cod{connect()}};
+  \draw[very thick] ($(Mx)+(-0.15,-9.9)$) -- ++(0.3,-0.3) ($(Mx)+(0.15,-9.9)$) -- ++(-0.3,-0.3);
+  \node[nota, anchor=north east, text width=5.0cm] at (15.95,-10.3)
+    {loja fora do ar: \cod{ConnectionRefusedError} (ou \cod{timeout} após 2,5 s) $\Rightarrow$ \cod{erro\_comunicacao}};
+
+  \node[nota, anchor=north west, text width=6.4cm] at (5.3,-11.85)
+    {\cod{join()} das 4 threads; calcula \cod{tempo\_total\_ms}; ordena por preço total (menor preço = PichauSim); grava uma linha em \cod{log\_pesquisas.csv}};
+  \mensagem[ret]{A}{C}{-14.0}{10: resposta\\consolidada}
+  \mensagem[ret]{C}{U}{-14.8}{11: relatório}
+\end{tikzpicture}

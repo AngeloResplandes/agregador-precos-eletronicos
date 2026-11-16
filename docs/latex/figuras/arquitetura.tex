@@ -1,0 +1,66 @@
+% Diagrama de arquitetura (mesmo conteúdo de docs/diagramas/arquitetura.mmd)
+\begin{tikzpicture}[
+    font=\footnotesize,
+    caixa/.style={draw, thick, align=center, fill=white, minimum height=1.0cm, text width=#1, inner sep=3pt},
+    caixa/.default=3.0cm,
+    loja/.style={caixa=2.6cm, fill=black!6},
+    grupo/.style={draw, rounded corners=3pt, inner sep=0.3cm},
+    titulo/.style={font=\footnotesize\bfseries, anchor=north west, inner sep=2pt},
+    seta/.style={-{Stealth[length=2.4mm]}, thick},
+    rot/.style={font=\scriptsize, fill=white, inner sep=1.5pt, align=center}]
+
+  % --- camada de clientes
+  \node[caixa] (cli)  at (1.9,0)  {\cod{cliente.py}\\CLI interativa ou por argumentos};
+  \node[caixa] (carga)at (5.9,0)  {\cod{cliente.py --clientes N}\\N clientes em threads};
+  \node[caixa] (exp)  at (9.9,0)  {\cod{experimentos.py}\\bateria dos 5 experimentos};
+  \node[caixa] (gw)   at (13.9,0) {\cod{gateway\_http.py}\\HTTP :8080 · cliente TCP do agregador};
+  \node[caixa, dashed] (web) at (13.9,2.4) {Navegador\\interface web (Vite + React)};
+  \draw[seta] (web) -- node[rot, right=2pt] {HTTP · JSON\\\cod{/api/...}} (gw);
+  \begin{scope}[on background layer]
+    \node[grupo, fill=black!2, fit=(cli)(gw), inner ysep=0.45cm, yshift=0.15cm] (gclientes) {};
+  \end{scope}
+  \node[titulo] at (gclientes.north west) {Clientes (processos independentes)};
+
+  % --- agregador
+  \node[caixa=4.2cm] (aceite) at (6.2,-3.3) {Thread de aceite -- \cod{accept()}};
+  \node[caixa=4.8cm] (tcli)   at (6.2,-4.9) {Thread por cliente\\valida · consolida ·\\ordena · mede tempo};
+  \node[caixa=2.9cm] (seq)    at (4.3,-6.9) {Sequencial\\laço \cod{for}};
+  \node[caixa=3.3cm, fill=black!10] (conc) at (8.1,-6.9) {Concorrente\\1 thread por loja + \cod{join()}};
+  \node[cylinder, shape border rotate=90, draw, thick, aspect=0.25, align=center,
+        minimum width=3.0cm, minimum height=1.4cm, fill=white] (csv) at (12.9,-4.9)
+        {\cod{resultados/}\\\cod{log\_pesquisas.csv}};
+  \draw[seta] (aceite) -- (tcli);
+  \begin{scope}[on background layer]
+    \node[grupo, fill=white, fit=(seq)(conc), inner ysep=0.4cm, yshift=0.12cm] (gestr) {};
+  \end{scope}
+  \node[titulo] at (gestr.north west) {Estratégia de consulta};
+  \draw[seta] (tcli) -- (tcli |- gestr.north);
+  \draw[seta] (tcli) -- node[rot, above] {\cod{Lock}} (csv);
+  \begin{scope}[on background layer]
+    \node[grupo, fill=black!4, fit=(aceite)(gestr)(csv), inner ysep=0.45cm, yshift=0.15cm] (gagr) {};
+  \end{scope}
+  \node[titulo] at (gagr.north west) {Agregador -- \cod{agregador.py} -- TCP 127.0.0.1:8000};
+
+  \foreach \c in {cli,carga,exp,gw}
+    \draw[seta] (\c.south) -- (\c.south |- gagr.north);
+  \node[rot] at ($(gclientes.south)!0.5!(gagr.north)$)
+    {TCP · JSON + \cod{\textbackslash n} · \cod{consultar} / \cod{listar\_produtos} / \cod{ping}};
+
+  % --- lojas
+  \node[loja] (l1) at (1.9,-11.0)  {\textbf{KabumSim}\\porta 9001};
+  \node[loja] (l2) at (5.9,-11.0)  {\textbf{PichauSim}\\porta 9002};
+  \node[loja] (l3) at (9.9,-11.0)  {\textbf{TerabyteSim}\\porta 9003};
+  \node[loja] (l4) at (13.9,-11.0) {\textbf{MagaluTechSim}\\porta 9004};
+  \begin{scope}[on background layer]
+    \node[grupo, fill=black!2, fit=(l1)(l4), inner ysep=0.45cm, yshift=0.15cm] (glojas) {};
+  \end{scope}
+  \node[titulo] at (glojas.north west) {Serviços independentes (1 processo cada -- \cod{loja\_server.py})};
+  \foreach \l in {l1,l2,l3,l4}
+    \draw[seta] (gestr.south) to[out=-90,in=90] (\l.north |- glojas.north);
+  \node[rot, anchor=east] at ($(gagr.south west)!0.5!(gagr.south west |- glojas.north)$) {TCP · JSON + \cod{\textbackslash n}\\timeout 2,5 s};
+
+  % --- catálogos
+  \node[caixa=7cm, dashed] (dados) at (7.9,-13.6) {Catálogos simulados -- \cod{backend/dados/lojas/*.json}\\(lidos uma vez quando a loja inicia)};
+  \foreach \l in {l1,l2,l3,l4}
+    \draw[densely dotted, -{Stealth[length=2mm]}] (\l.south |- glojas.south) -- (dados);
+\end{tikzpicture}

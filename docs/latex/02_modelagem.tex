@@ -1,0 +1,147 @@
+\input{abnt_comum}
+\input{dados_trabalho}
+\titulo{Agregador de Preços de Eletrônicos}
+\definirsubtitulo{Modelagem do Sistema}
+\preambulo{\naturezatrabalho}
+
+\begin{document}
+\selectlanguage{brazil}
+\frenchspacing
+
+% ================================================================= PRÉ-TEXTUAIS
+\pretextual
+\capagrupo
+\folhaderostogrupo
+\listafiguras
+\listaquadros
+\sumario
+
+% ================================================================= TEXTUAIS
+\textual
+
+\chapter{Introdução}
+
+Este documento reúne a modelagem do \textbf{Agregador de Preços de Eletrônicos} (Trabalho~1 de Sistemas Distribuídos, Tema~6, Grupo~VI), conforme a seção~5.4 do enunciado \cite{enunciado2026}: o \textbf{diagrama de casos de uso UML}, o \textbf{diagrama de arquitetura da aplicação} e o \textbf{diagrama de sequência de uma operação principal} (a pesquisa de um produto). Como pede o enunciado, os diagramas representam os componentes -- \textbf{cliente}, \textbf{agregador} e \textbf{serviços independentes} (seção~6 do enunciado) -- e os fluxos de comunicação entre eles. Os requisitos que esses diagramas atendem estão no Documento de Requisitos, e a implementação e os experimentos, no Relatório Técnico.
+
+O diagrama de casos de uso segue a notação UML \cite{sommerville2015}. Os diagramas de arquitetura e de sequência também são mantidos como fontes Mermaid no repositório (\cod{docs/diagramas/*.mmd}); as figuras deste documento foram redesenhadas para impressão, com o mesmo conteúdo.
+
+O sistema é composto por processos independentes que se comunicam apenas por \textbf{sockets TCP}: clientes, um agregador e quatro lojas simuladas. Cada mensagem é um objeto JSON em UTF-8, em uma linha terminada por \cod{\textbackslash n}, com uma requisição e uma resposta por conexão. A especificação completa do protocolo está em \cod{docs/03\_protocolo.md}.
+
+% -----------------------------------------------------------------
+\chapter{Diagrama de casos de uso}
+
+A \autoref{fig:casos-uso} apresenta o diagrama UML de casos de uso. Os atores (bonecos) ficam fora da fronteira do sistema e os casos de uso são elipses. As associações entre atores e casos de uso são linhas contínuas; as relações «include» e «extend» são linhas tracejadas com seta aberta. O ator secundário \textit{Serviço de loja} representa as quatro lojas.
+
+\begin{figure}[htb]
+  \centering
+  \caption{Diagrama de casos de uso}\label{fig:casos-uso}
+  \diagrama{casos_de_uso}
+  \fonteautores
+\end{figure}
+
+O \autoref{qua:casos-uso} resume cada elemento do diagrama.
+
+\begin{quadro}[!htbp]
+  \centering\small
+  \caption{Casos de uso do sistema}\label{qua:casos-uso}
+  \begin{tabularx}{\textwidth}{|L{4.0cm}|L{3.4cm}|Y|}
+    \hline
+    \textbf{Caso de uso} & \textbf{Ator} & \textbf{Descrição resumida} \\ \hline
+    UC01 -- Pesquisar produto & Usuário comprador; Serviço de loja & Pesquisa um eletrônico nas quatro lojas e apresenta as ofertas consolidadas. \\ \hline
+    UC02 -- Comparar sequencial × concorrente & Usuário comprador & Executa o UC01 nos dois modos e mostra o speedup («include» UC01). \\ \hline
+    UC03 -- Listar catálogo & Usuário comprador; Serviço de loja & Mostra os produtos disponíveis. \\ \hline
+    UC04 -- Executar experimentos & Pesquisador & Roda os cinco experimentos e gera tabelas e gráficos («include» UC01). \\ \hline
+    UC05 -- Usar a interface web & Usuário comprador; Pesquisador & Pesquisa, compara, derruba e sobe lojas, faz teste de carga e vê os experimentos pelo navegador («include» UC01 e UC02). \\ \hline
+    Ordenar e identificar melhor oferta & -- & Incluído no UC01: ordena por preço total ou custo-benefício. \\ \hline
+    Registrar tempo de execução & -- & Incluído no UC01: grava o tempo em \cod{log\_pesquisas.csv}. \\ \hline
+    Tratar falha de loja & -- & Estende o UC01 quando uma loja está fora do ar, cai ou estoura o timeout. \\ \hline
+  \end{tabularx}
+  \fonteautores
+\end{quadro}
+
+% -----------------------------------------------------------------
+\chapter{Diagrama de arquitetura}
+
+A \autoref{fig:arquitetura} mostra a arquitetura em três camadas de processos: clientes $\rightarrow$ agregador (porta 8000) $\rightarrow$ quatro lojas (portas 9001--9004). Toda a comunicação entre eles usa TCP com mensagens JSON delimitadas por quebra de linha. O navegador fala HTTP apenas com o gateway (porta 8080), que é mais um cliente TCP do agregador.
+
+\begin{figure}[!htbp]
+  \centering
+  \caption{Diagrama de arquitetura}\label{fig:arquitetura}
+  \diagrama{arquitetura}
+  \fonteautores
+\end{figure}
+
+\section{Componentes}
+
+O \autoref{qua:componentes} descreve cada componente, o processo em que executa, a porta e a concorrência interna. Todos os módulos Python ficam em \cod{backend/}.
+
+\begin{quadro}[!htbp]
+  \centering\small
+  \caption{Componentes da arquitetura}\label{qua:componentes}
+  \begin{tabularx}{\textwidth}{|L{3.6cm}|L{2.0cm}|L{2.2cm}|Y|}
+    \hline
+    \textbf{Componente} & \textbf{Processo} & \textbf{Porta} & \textbf{Concorrência interna} \\ \hline
+    Cliente (\cod{cliente.py}) & um por usuário & efêmera & -- (com \cod{--clientes N} ou em \cod{experimentos.py}, N clientes em threads) \\ \hline
+    Gateway HTTP (\cod{gateway\_http.py}) & 1 & 8080 (HTTP) & 1 thread por requisição HTTP; é um cliente TCP do agregador (no teste de carga, N clientes em threads) \\ \hline
+    Interface web (\cod{frontend/}, Vite + React) & navegador & 5173 em desenvolvimento & -- (fala só HTTP com o gateway) \\ \hline
+    Agregador (\cod{agregador.py}) & 1 & 8000 & Thread de aceite + 1 thread por cliente; no modo concorrente, +1 thread por loja \\ \hline
+    Lojas (\cod{loja\_server.py} × 4) & 4 independentes & 9001--9004 & Thread de aceite + 1 thread por conexão \\ \hline
+    Catálogos (\cod{dados/lojas/*.json}) & -- & -- & Lidos uma vez quando a loja inicia \\ \hline
+  \end{tabularx}
+  \fonteautores
+\end{quadro}
+
+\section{Módulos de apoio}
+
+Os módulos do \autoref{qua:modulos} não são processos próprios: são usados pelos componentes acima.
+
+\begin{quadro}[!htbp]
+  \centering\small
+  \caption{Módulos de apoio}\label{qua:modulos}
+  \begin{tabularx}{\textwidth}{|L{3.8cm}|Y|}
+    \hline
+    \textbf{Módulo} & \textbf{Função} \\ \hline
+    \cod{protocolo.py} & Envio e recebimento das mensagens (\textit{framing} JSON + \cod{\textbackslash n}, limite de 64~KB), operações, modos, critérios e códigos de status. \\ \hline
+    \cod{servidor\_base.py} & Servidor TCP multithread genérico (\cod{ServidorTCPMultithread}), usado pelo agregador e pelas lojas. \\ \hline
+    \cod{config.py} & Endereços, portas, latências e timeouts. \\ \hline
+    \cod{iniciar\_servicos.py} & Sobe as cinco instâncias de servidor (quatro lojas + agregador) como processos e espera que respondam a \cod{ping}; também é usado pelo gateway. \\ \hline
+  \end{tabularx}
+  \fonteautores
+\end{quadro}
+
+\section{Fluxo de comunicação}
+
+O cliente abre uma conexão TCP com o agregador e envia uma requisição. A thread do cliente no agregador escolhe a estratégia:
+
+\begin{itemize}
+  \item \textbf{sequencial}: um laço consulta loja por loja;
+  \item \textbf{concorrente}: uma thread por loja, todas aguardadas com \cod{join()}.
+\end{itemize}
+
+Cada consulta a uma loja é uma conexão TCP própria, com timeout de 2,5~s. As respostas são consolidadas, o tempo é registrado no CSV (protegido por \cod{Lock}) e o resultado volta ao cliente na mesma conexão. Como cada pesquisa abre conexões novas, o protocolo não guarda estado entre pesquisas: uma loja que volta ao ar passa a ser consultada de novo sem reiniciar o agregador \cite{tanenbaum2007}.
+
+\section{Interface web}
+
+O navegador não abre sockets TCP, então a interface chama o gateway por HTTP/JSON (\cod{/api/...}). O gateway valida o pedido e usa a mesma função do \cod{cliente.py} (\cod{requisitar\_agregador}) para abrir uma conexão TCP com o agregador. Do agregador para dentro nada muda: ele não sabe se o pedido veio da linha de comando ou da interface. A API HTTP está no Apêndice~A de \cod{docs/03\_protocolo.md}.
+
+% -----------------------------------------------------------------
+\chapter{Diagrama de sequência}
+
+A \autoref{fig:sequencia} mostra o caso de uso ``Pesquisar produto'' no modo concorrente, com uma loja fora do ar.
+
+\begin{figure}[!htbp]
+  \centering
+  \caption{Diagrama de sequência -- pesquisa no modo concorrente, com uma loja fora do ar}\label{fig:sequencia}
+  \diagrama{sequencia}
+  \fonteautores
+\end{figure}
+
+O bloco \textbf{par} mostra as quatro consultas executadas \textbf{ao mesmo tempo}, em threads diferentes do agregador. A thread~4 ilustra o tratamento de falha: a conexão com a MagaluTechSim é recusada e o agregador registra \cod{erro\_comunicacao} para essa loja, sem atrasar as demais. Depois do \cod{join()}, o agregador ordena as ofertas pelo preço total, aponta o menor preço (PichauSim, R\$~1.864,00) e grava a pesquisa em \cod{log\_pesquisas.csv}. O tempo total corresponde ao da consulta mais lenta, e não à soma.
+
+No \textbf{modo sequencial}, o diagrama seria igual, mas sem o bloco \textbf{par}: as mensagens 3 a 9 aconteceriam uma após a outra, e cada consulta só começaria depois da resposta da anterior. Por isso o tempo total do modo sequencial se aproxima da soma das latências das lojas, como mostram os experimentos do Relatório Técnico.
+
+% ================================================================= PÓS-TEXTUAIS
+\postextual
+\bibliography{referencias}
+
+\end{document}
